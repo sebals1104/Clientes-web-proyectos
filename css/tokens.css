@@ -1,0 +1,73 @@
+/* ===========================================================================
+   Holgura — Tokens de identidad visual
+   ---------------------------------------------------------------------------
+   Fuente única de color para toda la aplicación. Ningún otro archivo declara
+   colores literales: todos consumen estas custom properties.
+
+   Los valores no fueron elegidos a ojo. La paleta categórica se validó con
+   simulación de daltonismo (Machado-Oliveira-Fernandes 2009, severidad 1.0)
+   y los pares de texto contra WCAG AA.
+   =========================================================================== */
+
+:root {
+  /* -------------------------------------------------------------------------
+     Interfaz
+     Ratio de contraste medido contra --fondo (#F7F6F3).
+     ------------------------------------------------------------------------- */
+  --fondo:          #F7F6F3;  /* hueso: base de la aplicación           */
+  --superficie:     #FFFFFF;  /* tarjetas, paneles, modales             */
+  --texto:          #2C3330;  /* 11.97:1 — AA y AAA                     */
+  --texto-apagado:  #5E6B64;  /*  5.16:1 — AA                           */
+  --acento:         #3F6F63;  /*  5.30:1 — AA. Blanco encima: 5.73:1    */
+  --borde:          #CBC5B8;  /*  1.59:1 — supera el mínimo 1.5:1       */
+  --error:          #9A3B32;  /*  6.38:1 — AA                           */
+
+  /* -------------------------------------------------------------------------
+     Paleta categórica — identidad de materia
+     ------------------------------------------------------------------------- */
+  --materia-1: #0d906d;  /* salvia    */
+  --materia-2: #3d57a9;  /* índigo    */
+  --materia-3: #cd633c;  /* terracota */
+  --materia-4: #d5ab3a;  /* ocre      */
+  --materia-5: #9d4576;  /* ciruela   */
+  --materia-6: #2ba9c2;  /* petróleo  */
+  --materia-7: #306324;  /* musgo     */
+  --materia-8: #b28fdb;  /* lila      */
+}
+
+/* ---------------------------------------------------------------------------
+   REGLAS DE USO — leer antes de tocar un color en cualquier otro archivo
+   ---------------------------------------------------------------------------
+
+   1. El orden de los slots es fijo y es el mecanismo de seguridad.
+      Se asignan en secuencia (materia-1, luego materia-2, ...) y NUNCA se
+      ciclan. Peor par adyacente medido: ΔE 14.0 bajo deuteranopía (mínimo
+      exigido 8) y 17.9 bajo visión normal (mínimo 15). Reordenar los slots
+      invalida esa medición.
+
+   2. El color sigue a la materia, nunca a su posición en la lista.
+      Una vez que una materia recibe un slot, lo conserva durante toda la
+      sesión. Si un filtro reduce los resultados, las materias que quedan
+      mantienen su color. Repintar por índice hace que el usuario pierda la
+      referencia visual cada vez que filtra.
+
+   3. Más de 8 materias: no se genera un color nuevo.
+      El slot 9 en adelante reutiliza el ciclo pero depende del código visible
+      en el bloque para distinguirse, nunca del color solo.
+
+   4. El texto usa tokens de texto, jamás el color de la materia.
+      El color de materia vive en el fondo o el borde del bloque; el código, la
+      sección y el aula se escriben con --texto o --texto-apagado.
+
+   5. La identidad nunca depende solo del color.
+      Cada bloque de la rejilla muestra código, sección y aula (requisito §4.8).
+      Ese texto es el canal primario de identidad; el color lo refuerza.
+
+   6. En impresión la identidad NO se codifica por color — ver print.css.
+      No existe una paleta de 8 colores que sea simultáneamente segura para
+      daltonismo y separable en escala de grises: la seguridad para daltonismo
+      requiere variación de tono a luminosidad pareja, y la escala de grises
+      requiere variación de luminosidad. Esta paleta prioriza la pantalla
+      (separación mínima en grises: 0.010, insuficiente para imprimir).
+      print.css resuelve la identidad con código de materia y trama de borde.
+   --------------------------------------------------------------------------- */
