@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horarios Web - Armador de Horarios</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="css/print.css" media="print">
+</head>
+<body>
+  <header>
+    <h1>Horarios Web</h1>
+    <p class="muted">Armador de horarios académico (HTML5, CSS3, JS Vanilla)</p>
+  </header>
+  <main>
+    <section id="sec-catalogo">
+      <h2>Catálogo de Materias</h2>
+      <div class="flex">
+        <input id="busqueda" type="search" placeholder="Buscar por código o nombre">
+        <select id="filtro-trimestre">
+          <option value="">Todos los trimestres</option>
+          <option value="1">Trimestre 1</option>
+          <option value="2">Trimestre 2</option>
+          <option value="3">Trimestre 3</option>
+          <option value="4">Trimestre 4</option>
+          <option value="5">Trimestre 5</option>
+        </select>
+      </div>
+      <div id="catalogo-lista" class="grid"></div>
+    </section>
+
+    <section id="sec-seleccion">
+      <h2>Selección</h2>
+      <div class="muted">Materias: <span id="sel-cant">0</span> | Total UC: <span id="sel-uc">0</span> | Tope UC: <span id="sel-tope">28</span></div>
+      <div class="flex">
+        <select id="sel-trim-completo">
+          <option value="">Agregar trimestre completo</option>
+          <option value="1">Trimestre 1</option>
+          <option value="2">Trimestre 2</option>
+          <option value="3">Trimestre 3</option>
+          <option value="4">Trimestre 4</option>
+          <option value="5">Trimestre 5</option>
+        </select>
+        <button id="btn-agregar-trim" class="secondary">Agregar</button>
+        <label class="flex"><span>Tope UC:</span><input id="tope-uc" type="number" min="1" step="1"></label>
+      </div>
+      <div id="sel-lista" class="grid"></div>
+      <div id="sel-msg" class="muted"></div>
+    </section>
+
+    <section id="sec-manuales">
+      <h2>Materias manuales</h2>
+      <details>
+        <summary>Agregar materia manual</summary>
+        <form id="form-manual" novalidate>
+          <div class="grid" style="grid-template-columns: repeat(auto-fit,minmax(220px,1fr));">
+            <label>Código<input name="codigo" required></label>
+            <label>Nombre<input name="nombre" required></label>
+            <label>Trimestre<select name="trimestre" required>
+              <option value="">--</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
+            </select></label>
+            <label>UC<input name="uc" type="number" min="1" max="5" step="1" required></label>
+          </div>
+          <h3>Secciones</h3>
+          <div id="form-secciones" class="grid"></div>
+          <div class="flex">
+            <button type="button" id="btn-add-seccion" class="secondary">Agregar sección</button>
+            <button type="submit">Guardar materia manual</button>
+            <span id="form-manual-msg" class="muted"></span>
+          </div>
+        </form>
+      </details>
+      <div id="manuales-lista" class="grid"></div>
+    </section>
+
+    <section id="sec-choques">
+      <h2>Choques e incompatibilidades</h2>
+      <div id="choques-info" class="muted"></div>
+    </section>
+
+    <section id="sec-generador">
+      <h2>Generador</h2>
+      <div class="flex">
+        <button id="btn-generar">Generar horarios</button>
+        <span class="muted" id="gen-total">0 combinaciones</span>
+      </div>
+      <div id="gen-msg" class="muted"></div>
+    </section>
+
+    <section id="sec-preferencias">
+      <h2>Preferencias y ordenamiento</h2>
+      <div class="flex">
+        <label>Días libres:<select id="pref-dias" multiple size="6">
+          <option value="LUN">LUN</option><option value="MAR">MAR</option><option value="MIE">MIE</option><option value="JUE">JUE</option><option value="VIE">VIE</option><option value="SAB">SAB</option>
+        </select></label>
+        <label>Hora min entrada<input id="pref-hmin" type="time"></label>
+        <label>Hora max salida<input id="pref-hmax" type="time"></label>
+        <label>Ordenar por<select id="pref-orden">
+          <option value="">Sin ordenar</option>
+          <option value="menos-dias">Menos días</option>
+          <option value="menos-muertas">Menos horas muertas</option>
+          <option value="salida-temprana">Salida más temprana</option>
+        </select></label>
+      </div>
+      <div class="muted" id="pref-contador"></div>
+    </section>
+
+    <section id="sec-rejilla">
+      <h2>Rejilla semanal</h2>
+      <div class="flex no-print">
+        <button id="rej-anterior" class="secondary">Anterior</button>
+        <span class="muted" id="rej-pos">Opción 0 de 0</span>
+        <button id="rej-siguiente" class="secondary">Siguiente</button>
+        <button id="btn-definitivo">Elegir como horario definitivo</button>
+      </div>
+      <div id="rej-metricas" class="muted"></div>
+      <div id="rej-grid" class="rejilla"></div>
+      <div id="rej-detalle" class="card"></div>
+    </section>
+
+    <section id="sec-resumen">
+      <h2>Horario definitivo</h2>
+      <div class="flex no-print">
+        <button id="btn-imprimir">Imprimir resumen</button>
+      </div>
+      <div id="res-rejilla"></div>
+      <div id="res-tabla" class="card"></div>
+      <div id="res-total" class="muted"></div>
+    </section>
+  </main>
+
+  <script src="data/bloques.js"></script>
+  <script src="data/materias.js"></script>
+  <script src="js/tiempo.js"></script>
+  <script src="js/datos.js"></script>
+  <script src="js/catalogo.js"></script>
+  <script src="js/seleccion.js"></script>
+  <script src="js/formulario.js"></script>
+  <script src="js/choques.js"></script>
+  <script src="js/generador.js"></script>
+  <script src="js/preferencias.js"></script>
+  <script src="js/rejilla.js"></script>
+  <script src="js/resumen.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

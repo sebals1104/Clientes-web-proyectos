@@ -1,0 +1,22 @@
+﻿const BLOQUES = [
+  { id: "B01", tipo: "regular", inicio: "07:00", fin: "07:45" },
+  { id: "B02", tipo: "regular", inicio: "07:45", fin: "08:30" },
+  { id: "B03", tipo: "regular", inicio: "08:30", fin: "09:15" },
+  { id: "B04", tipo: "regular", inicio: "09:15", fin: "10:00" },
+  { id: "B05", tipo: "regular", inicio: "10:00", fin: "10:45" },
+  { id: "B06", tipo: "regular", inicio: "10:45", fin: "11:30" },
+  { id: "B07", tipo: "regular", inicio: "11:30", fin: "12:15" },
+  { id: "B08", tipo: "regular", inicio: "12:15", fin: "13:00" },
+  { id: "B09", tipo: "regular", inicio: "13:00", fin: "13:45" },
+  { id: "B10", tipo: "regular", inicio: "13:45", fin: "14:30" },
+  { id: "B11", tipo: "regular", inicio: "14:30", fin: "15:15" },
+  { id: "B12", tipo: "regular", inicio: "15:15", fin: "16:00" },
+  { id: "B13", tipo: "regular", inicio: "16:00", fin: "16:45" },
+  { id: "B14", tipo: "regular", inicio: "16:45", fin: "17:30" },
+  { id: "B15", tipo: "regular", inicio: "17:30", fin: "18:15" },
+  { id: "L01", tipo: "laboratorio", inicio: "07:00", fin: "09:00" },
+  { id: "L02", tipo: "laboratorio", inicio: "08:00", fin: "10:00" },
+  { id: "L03", tipo: "laboratorio", inicio: "10:00", fin: "12:00" },
+  { id: "L04", tipo: "laboratorio", inicio: "13:00", fin: "15:00" },
+  { id: "L05", tipo: "laboratorio", inicio: "15:00", fin: "17:00" }
+];
