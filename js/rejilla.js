@@ -4,7 +4,6 @@
 // Dominio del campo `dia` definido por el enunciado.
 const DIAS_REJILLA = ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
 const SLOTS_COLOR_MATERIA = 8;
-const PX_POR_MINUTO_REJILLA = 1.4;
 
 /* ---------- Escala y ubicación ---------- */
 
@@ -200,9 +199,10 @@ function construirRejilla(resultado, opciones) {
   const opts = opciones || {};
   const escala = escalaRejilla();
   const grid = crearElemento('div', { clase: 'rejilla-grid' });
-  const alto = Math.max(escala.paso * PX_POR_MINUTO_REJILLA, 4);
+  // Altura por minuto en CSS (--rej-px-minuto) para que print.css pueda reducirla.
+  const alto = 'max(4px, calc(' + escala.paso + ' * var(--rej-px-minuto, 1.4px)))';
   grid.style.gridTemplateColumns = '3.5rem repeat(' + DIAS_REJILLA.length + ', minmax(7rem, 1fr))';
-  grid.style.gridTemplateRows = 'auto repeat(' + escala.filas + ', ' + alto + 'px)';
+  grid.style.gridTemplateRows = 'auto repeat(' + escala.filas + ', ' + alto + ')';
 
   grid.appendChild(crearElemento('div', { clase: 'rej-esquina' }));
   DIAS_REJILLA.forEach((dia, i) => {

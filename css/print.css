@@ -1,7 +1,47 @@
+/* ===========================================================================
+   Impresión del horario definitivo (§4.9, §5.1)
+   Monocromo por diseño: la identidad de materia se resuelve con el código y
+   una trama de borde, nunca con color (regla 6 de tokens.css).
+   Hoja A4 horizontal: la rejilla ocupa la primera página y la tabla empieza
+   en la segunda, así ninguna de las dos se comprime hasta ser ilegible.
+   =========================================================================== */
+@page { size: A4 landscape; margin: 10mm; }
+
 @media print {
-  body { background: #fff; color: #000; }
-  header, nav, .no-print { display: none !important; }
-  main { max-width: 100%; padding: 0; }
-  section { background: #fff; border: none; border-radius: 0; padding: 0.25rem; }
-  .card { background: #fff; border: 1px solid #ccc; }
+  * { box-shadow: none !important; animation: none !important; transition: none !important; }
+  html, body { background: #fff; color: #000; font-size: 10pt; }
+  header { display: block; padding: 0 0 4mm; border: none; background: none; }
+  header h1 { margin: 0; font-size: 16pt; color: #000; }
+  header p, nav, .no-print, button, main > section:not(#sec-resumen) { display: none !important; }
+  main { display: block; max-width: 100%; padding: 0; }
+  #sec-resumen { display: block; padding: 0; border: none; background: #fff; }
+  #sec-resumen h2 { font-size: 13pt; color: #000; }
+  .muted, #res-total { color: #000; }
+  #res-total { margin-top: 2mm; }
+
+  :root { --rej-px-minuto: 0.7px; }
+  .rej-scroll { overflow: visible; border: none; border-radius: 0; }
+  .rejilla-grid { min-width: 0; background: #fff; }
+  .rej-dia, .rej-esquina, .rej-hora { background: #fff; color: #000; position: static; border-color: #000; }
+  .rej-guia { border-top: 1px solid #ccc; }
+  .rej-sesion { background: #fff; color: #000; border: 1px solid #000; border-left: 4px solid #000; border-radius: 0; padding: 0.5mm 1mm; font-size: 7pt; line-height: 1.1; }
+  .rej-sesion span { color: #000; }
+
+  /* Trama de borde por slot: sobrevive a la escala de grises. */
+  [data-slot="1"] { border-left: 4px solid #000 !important; }
+  [data-slot="2"] { border-left: 4px dashed #000 !important; }
+  [data-slot="3"] { border-left: 4px dotted #000 !important; }
+  [data-slot="4"] { border-left: 4px double #000 !important; }
+  [data-slot="5"] { border-left: 8px solid #000 !important; }
+  [data-slot="6"] { border-left: 8px dashed #000 !important; }
+  [data-slot="7"] { border-left: 8px dotted #000 !important; }
+  [data-slot="8"] { border-left: 8px double #000 !important; }
+
+  #res-tabla { break-before: page; margin-top: 0; padding: 0; border: none; background: #fff; overflow: visible; }
+  .res-tabla { font-size: 9pt; }
+  .res-tabla caption { color: #000; font-weight: 700; }
+  .res-tabla th, .res-tabla td, .res-tabla thead th { border: 1px solid #000; color: #000; background: #fff; }
+  .res-tabla thead { display: table-header-group; }
+  .res-tabla tr { break-inside: avoid; }
+  .res-muestra { background: #fff; border-top: 1px solid #000; border-right: 1px solid #000; border-bottom: 1px solid #000; }
 }
