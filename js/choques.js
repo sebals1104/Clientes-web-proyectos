@@ -1,4 +1,4 @@
-// choques.js - Detección de choques e incompatibilidades
+// choques.js - Detecciï¿½n de choques e incompatibilidades
 // Usa tiempo.js para comparar intervalos. fin==inicio NO es choque.
 
 function obtenerSesionesDeMateria(materia){
@@ -17,7 +17,7 @@ function sesionChocaCon(s1,s2){
   const map = new Map(b1.map(x=>[x.id,x]));
   const m2 = new Map(b2.map(x=>[x.id,x]));
   const get = (id,mapa)=> mapa.get(id);
-  // tomar inicio/fin de cada sesión: usar primer/último bloque según inicio/fin
+  // tomar inicio/fin de cada sesiï¿½n: usar primer/ï¿½ltimo bloque segï¿½n inicio/fin
   const getIniFin = (ses,mapa)=>{
     let min=Infinity, max=-Infinity;
     (ses.bloques||[]).forEach(id=>{
@@ -33,30 +33,45 @@ function sesionChocaCon(s1,s2){
   return chocanIntervalos(minutosAHhmm(a.ini), minutosAHhmm(a.fin), minutosAHhmm(b.ini), minutosAHhmm(b.fin));
 }
 
+function seccionesChocanEntre(seccionA, seccionB){
+  const sA = (seccionA && seccionA.horario) ? seccionA.horario : [];
+  const sB = (seccionB && seccionB.horario) ? seccionB.horario : [];
+  for(let i=0;i<sA.length;i++){
+    for(let j=0;j<sB.length;j++){
+      if(sesionChocaCon(sA[i], sB[j])) return true;
+    }
+  }
+  return false;
+}
+
+function seccionesDisponiblesParaChoques(codigo){
+  if(typeof seccionesDisponibles === 'function'){
+    const disponibles = seccionesDisponibles(codigo);
+    if(disponibles && disponibles.length > 0) return disponibles;
+  }
+  const materia = obtenerMateriaPorCodigo(codigo);
+  return (materia && materia.secciones) ? materia.secciones : [];
+}
+
 function detectarIncompatibilidades(seleccion){
-  // seleccion: array de códigos de materias seleccionadas
+  // seleccion: array de codigos de materias seleccionadas (o de entradas de seleccion).
+  // Dos materias son incompatibles cuando TODAS las secciones disponibles de una
+  // chocan con TODAS las secciones disponibles de la otra (relacion simetrica).
   const res=[];
-  const cat=obtenerCatalogoCompleto();
-  const mats=cat.filter(m=> seleccion.includes(m.codigo));
+  const codigos = (seleccion || []).map(e => (typeof e === 'string') ? e : e.codigo);
+  const mats = codigos.map(c => obtenerMateriaPorCodigo(c)).filter(m => m);
   for(let i=0;i<mats.length;i++){
-    const A=mats[i], sA=obtenerSesionesDeMateria(A);
     for(let j=i+1;j<mats.length;j++){
-      const B=mats[j], sB=obtenerSesionesDeMateria(B);
-      let todasAChocanConB=true;
-      if(sA.length===0 || sB.length===0){ todasAChocanConB=false; }
-      else {
-        for(let k=0;k<sA.length;k++){
-          let chocaAlguna=false;
-          for(let p=0;p<sB.length;p++){
-            if(sesionChocaCon(sA[k],sB[p])){ chocaAlguna=true; break; }
-          }
-          if(!chocaAlguna){ todasAChocanConB=false; break; }
+      const secsA = seccionesDisponiblesParaChoques(mats[i].codigo);
+      const secsB = seccionesDisponiblesParaChoques(mats[j].codigo);
+      if(secsA.length===0 || secsB.length===0) continue;
+      let todasChocan = true;
+      for(let a=0;a<secsA.length && todasChocan;a++){
+        for(let b=0;b<secsB.length;b++){
+          if(!seccionesChocanEntre(secsA[a], secsB[b])){ todasChocan=false; break; }
         }
       }
-      if(todasAChocanConB){
-        // también chequear simétrico
-        res.push({a:A.codigo,b:B.codigo});
-      }
+      if(todasChocan) res.push({a: mats[i].codigo, b: mats[j].codigo});
     }
   }
   return res;

@@ -1,4 +1,8 @@
-function escapeHtml(s){ if(s==null) return ''; return String(s).replace(/[&<>"']/g,c=>({'"&quot;','<':'&lt;','>':'&gt;'}[c]||'&'+c+';')); }
+function escapeHtml(s){
+  if(s==null) return '';
+  const mapa = {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'};
+  return String(s).replace(/[&<>"']/g, c => mapa[c]);
+}
 
 function initFormulario(){
   const form=document.getElementById('form-manual');
@@ -21,10 +25,10 @@ function initFormulario(){
     const opts=renderBloquesSelect();
     return `<div class="card" data-sesion="${sesIdx}">
       <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));">
-        <label>Día<select name="dia-${sIdx}-${sesIdx}" required><option value="">--</option><option value="LUN">LUN</option><option value="MAR">MAR</option><option value="MIE">MIE</option><option value="JUE">JUE</option><option value="VIE">VIE</option><option value="SAB">SAB</option></select></label>
+        <label>Dï¿½a<select name="dia-${sIdx}-${sesIdx}" required><option value="">--</option><option value="LUN">LUN</option><option value="MAR">MAR</option><option value="MIE">MIE</option><option value="JUE">JUE</option><option value="VIE">VIE</option><option value="SAB">SAB</option></select></label>
         <label>Bloques<select name="bloques-${sIdx}-${sesIdx}" multiple required>${opts}</select></label>
         <label>Aula<input name="aula-${sIdx}-${sesIdx}" required></label>
-        <button type="button" class="secondary btn-del-ses">Eliminar sesión</button>
+        <button type="button" class="secondary btn-del-ses">Eliminar sesiï¿½n</button>
       </div>
     </div>`;
   }
@@ -32,12 +36,12 @@ function initFormulario(){
   function nuevaSeccionHTML(idx){
     return `<div class="card" data-seccion-idx="${idx}">
       <div class="flex">
-        <label>ID Sección<input name="sec-id-${idx}" required></label>
+        <label>ID Secciï¿½n<input name="sec-id-${idx}" required></label>
         <label>Profesor<input name="sec-prof-${idx}" required></label>
-        <button type="button" class="secondary btn-del-sec">Eliminar sección</button>
+        <button type="button" class="secondary btn-del-sec">Eliminar secciï¿½n</button>
       </div>
       <div class="grid" data-sesiones-${idx}>${nuevaSesionHTML(idx,0)}</div>
-      <button type="button" class="secondary btn-add-ses" data-sidx="${idx}">Agregar sesión</button>
+      <button type="button" class="secondary btn-add-ses" data-sidx="${idx}">Agregar sesiï¿½n</button>
     </div>`;
   }
 
