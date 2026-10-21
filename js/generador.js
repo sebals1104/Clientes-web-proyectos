@@ -47,7 +47,9 @@ function invalidarResultados() {
   resultadosValidos = false;
   resultadosInvalidados = generadoAlgunaVez;
   firmaGenerador = '';
-  if (typeof limpiarResultadosRejilla === 'function') limpiarResultadosRejilla();
+  // Preferencias reinicia su contador y vacía la rejilla; sin ellas, se limpia la rejilla directamente.
+  if (typeof establecerResultadosPreferencias === 'function') establecerResultadosPreferencias([]);
+  else if (typeof limpiarResultadosRejilla === 'function') limpiarResultadosRejilla();
   renderGenerador();
 }
 
@@ -232,7 +234,11 @@ function inicializarGenerador() {
   if (boton) {
     boton.addEventListener('click', function () {
       const r = generarHorarios();
-      if (r.ok && typeof establecerResultadosRejilla === 'function') {
+      // Los resultados pasan por preferencias (filtros y orden) antes de llegar a la rejilla.
+      // Se notifica también cuando no hay combinaciones, para no dejar resultados anteriores.
+      if (typeof establecerResultadosPreferencias === 'function') {
+        establecerResultadosPreferencias(r.combinaciones);
+      } else if (r.ok && typeof establecerResultadosRejilla === 'function') {
         establecerResultadosRejilla(r.combinaciones);
       }
     });

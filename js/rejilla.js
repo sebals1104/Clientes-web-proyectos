@@ -140,6 +140,7 @@ function slotColorMateria(codigo) {
 
 let resultadosRejilla = [];
 let indiceRejilla = 0;
+let mensajeVacioRejilla = null;
 let sesionActivaRejilla = null;
 let elementoActivoRejilla = null;
 
@@ -147,8 +148,11 @@ function hayDomRejilla() {
   return typeof document !== 'undefined' && !!document.getElementById('rej-grid');
 }
 
-function establecerResultadosRejilla(resultados) {
+// `opciones.mensajeVacio` ({ titulo, texto }) reemplaza el estado vacío por defecto,
+// p. ej. cuando los filtros de preferencias excluyen todas las combinaciones.
+function establecerResultadosRejilla(resultados, opciones) {
   resultadosRejilla = Array.isArray(resultados) ? resultados.slice() : [];
+  mensajeVacioRejilla = (opciones && opciones.mensajeVacio) || null;
   indiceRejilla = 0;
   resultadosRejilla.forEach(r => {
     asignarColoresMaterias(normalizarResultado(r).map(e => e.materia.codigo));
@@ -158,6 +162,7 @@ function establecerResultadosRejilla(resultados) {
 
 function limpiarResultadosRejilla() {
   resultadosRejilla = [];
+  mensajeVacioRejilla = null;
   indiceRejilla = 0;
   renderRejilla();
 }
@@ -351,9 +356,13 @@ function renderRejilla() {
     scroll.appendChild(construirRejilla(resultado, { interactiva: true, alSeleccionar: abrirDetalleRejilla }));
     cont.appendChild(scroll);
   } else {
+    const vacio = mensajeVacioRejilla || {
+      titulo: 'Todavía no hay horarios generados',
+      texto: 'Usa "Generar horarios" para ver aquí las opciones.'
+    };
     cont.appendChild(crearElemento('div', { clase: 'estado-vacio muted' }, [
-      crearElemento('strong', { texto: 'Todavía no hay horarios generados' }),
-      crearElemento('p', { texto: 'Usa "Generar horarios" para ver aquí las opciones.' })
+      crearElemento('strong', { texto: vacio.titulo }),
+      crearElemento('p', { texto: vacio.texto })
     ]));
   }
   document.dispatchEvent(new CustomEvent('rejilla:cambio'));
