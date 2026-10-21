@@ -79,3 +79,79 @@ input, select, textarea { background: #141729; color: var(--text); border: 1px s
 
 .estado-vacio { grid-column: 1 / -1; text-align: center; padding: 1.5rem 1rem; border: 1px dashed var(--border); border-radius: 10px; }
 .estado-vacio p { margin: 0.25rem 0 0; }
+
+/* ===========================================================================
+   Fase 5 — Rejilla semanal
+   =========================================================================== */
+.rej-metrica { display: inline-flex; flex-direction: column; margin: 0.5rem 1.25rem 0.5rem 0; }
+.rej-metrica-titulo { font-size: 0.8rem; color: var(--muted); }
+.rej-metrica strong { color: var(--text); font-size: 1.05rem; }
+
+/* Los ítems de la rejilla general de main no deben crecer al ancho mínimo de la rejilla semanal. */
+#sec-rejilla, #sec-resumen { min-width: 0; }
+.rej-scroll { overflow-x: auto; overflow-y: hidden; border: 1px solid var(--border); border-radius: 10px; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+.rejilla-grid { display: grid; min-width: 48rem; background: var(--panel); animation: rej-entrada 0.3s ease; }
+.rej-dia { padding: 0.4rem 0.25rem; text-align: center; font-weight: 600; color: var(--text); border-bottom: 1px solid var(--border); background: var(--panel); }
+.rej-esquina { border-bottom: 1px solid var(--border); position: sticky; left: 0; background: var(--panel); z-index: 2; }
+.rej-hora { position: sticky; left: 0; z-index: 2; background: var(--panel); padding: 0 0.4rem; font-size: 0.75rem; line-height: 1; color: var(--muted); text-align: right; align-self: start; padding-top: 2px; }
+.rej-hora.final { align-self: end; padding-top: 0; }
+.rej-guia { border-top: 1px solid var(--border); pointer-events: none; z-index: 0; }
+
+.rej-sesion { display: flex; flex-direction: column; gap: 0.1rem; margin: 1px 2px; padding: 0.25rem 0.4rem; overflow: hidden; text-align: left; font-size: 0.78rem; line-height: 1.2; color: var(--text); border: 1px solid var(--border); border-left: 4px solid var(--rej-color); border-radius: 6px; background: color-mix(in srgb, var(--rej-color) 25%, var(--panel)); z-index: 1; transition: transform 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease; }
+.rej-sesion span { color: var(--muted); }
+button.rej-sesion { cursor: pointer; }
+button.rej-sesion:hover { border-color: var(--accent-2); border-left-color: var(--rej-color); transform: translateY(-1px); }
+button.rej-sesion:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 1px; }
+.rej-sesion.activa { border-color: var(--text); border-left-color: var(--rej-color); box-shadow: 0 0 0 2px var(--accent-2); }
+
+#rej-detalle { margin-top: 0.75rem; max-height: 0; padding-block: 0; border-width: 0; overflow: hidden; opacity: 0; visibility: hidden; transform: translateY(-6px); transition: opacity 0.25s ease, transform 0.25s ease, max-height 0.25s ease, padding 0.25s ease, visibility 0s linear 0.25s; }
+#rej-detalle.abierto { max-height: 30rem; padding-block: 0.75rem; border-width: 1px; opacity: 1; visibility: visible; transform: none; transition-delay: 0s; }
+#rej-detalle h3 { font-size: 1.05rem; }
+.rej-detalle-datos { display: grid; grid-template-columns: max-content 1fr; gap: 0.2rem 0.75rem; margin: 0 0 0.75rem; }
+.rej-detalle-datos dt { color: var(--muted); }
+.rej-detalle-datos dd { margin: 0; }
+
+#rej-anterior, #rej-siguiente { transition: background-color 0.15s ease, border-color 0.15s ease; }
+#rej-anterior:hover:not(:disabled), #rej-siguiente:hover:not(:disabled) { border-color: var(--accent-2); background: rgba(79, 157, 235, 0.15); }
+#btn-definitivo { transition: filter 0.15s ease; }
+#btn-definitivo:hover:not(:disabled) { filter: brightness(1.1); }
+#rej-anterior:disabled, #rej-siguiente:disabled, #btn-definitivo:disabled { opacity: 0.45; cursor: not-allowed; }
+
+@keyframes rej-entrada { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .rejilla-grid { animation: none; }
+  .rej-sesion, #rej-detalle, #rej-anterior, #rej-siguiente, #btn-definitivo { transition: none; }
+  button.rej-sesion:hover { transform: none; }
+}
+
+/* ===========================================================================
+   Fase 5 — Resumen y horario definitivo
+   =========================================================================== */
+:root { --rej-px-minuto: 1.4px; }
+#sec-resumen h2:focus { outline: none; }
+#sec-resumen h2:focus-visible { outline: 2px solid var(--accent-2); outline-offset: 4px; border-radius: 4px; }
+#btn-imprimir, #btn-quitar-definitivo { transition: background-color 0.15s ease, border-color 0.15s ease, filter 0.15s ease; }
+#btn-imprimir:hover:not(:disabled) { filter: brightness(1.1); }
+#btn-quitar-definitivo:hover:not(:disabled) { border-color: var(--error); background: rgba(214, 69, 69, 0.15); }
+#btn-imprimir:disabled, #btn-quitar-definitivo:disabled { opacity: 0.45; cursor: not-allowed; }
+#btn-definitivo.activo { background: transparent; color: var(--ok); border: 1px solid var(--ok); opacity: 1; cursor: default; }
+
+.res-mensaje:empty { display: none; }
+.res-mensaje { margin-top: 0.75rem; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--border); }
+.res-mensaje.ok { border-color: var(--ok); }
+.res-mensaje.error { border-color: var(--error); }
+
+#res-rejilla { margin-top: 0.75rem; }
+#res-tabla { margin-top: 0.75rem; overflow-x: auto; }
+#res-total { margin-top: 0.5rem; font-weight: 600; }
+.res-tabla { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+.res-tabla caption { text-align: left; padding-bottom: 0.5rem; color: var(--muted); }
+.res-tabla th, .res-tabla td { padding: 0.45rem 0.6rem; border-bottom: 1px solid var(--border); text-align: left; vertical-align: top; }
+.res-tabla thead th { color: var(--muted); font-weight: 600; font-size: 0.8rem; }
+.res-tabla tbody tr:nth-child(even) { background: rgba(255, 255, 255, 0.03); }
+.res-tabla tbody tr:hover { background: rgba(79, 157, 235, 0.1); }
+.res-tabla tfoot th, .res-tabla tfoot td { border-top: 1px solid var(--border); border-bottom: none; font-weight: 700; }
+.res-tabla .res-num { text-align: right; white-space: nowrap; }
+.res-codigo { white-space: nowrap; }
+.res-lista { list-style: none; margin: 0; padding: 0; }
+.res-muestra { display: inline-block; width: 0.9rem; height: 0.9rem; margin-right: 0.5rem; vertical-align: -0.1rem; border-radius: 3px; border-left: 4px solid var(--rej-color); background: color-mix(in srgb, var(--rej-color) 25%, var(--panel)); }
