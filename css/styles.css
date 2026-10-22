@@ -155,3 +155,24 @@ button.rej-sesion:focus-visible { outline: 2px solid var(--accent-2); outline-of
 .res-codigo { white-space: nowrap; }
 .res-lista { list-style: none; margin: 0; padding: 0; }
 .res-muestra { display: inline-block; width: 0.9rem; height: 0.9rem; margin-right: 0.5rem; vertical-align: -0.1rem; border-radius: 3px; border-left: 4px solid var(--rej-color); background: color-mix(in srgb, var(--rej-color) 25%, var(--panel)); }
+
+/* ===========================================================================
+   Fase 4 — Preferencias y ordenamiento
+   =========================================================================== */
+#sec-preferencias { min-width: 0; }
+#sec-preferencias .flex { align-items: flex-start; gap: 0.75rem 1rem; }
+#sec-preferencias label { display: flex; flex-direction: column; gap: 0.25rem; font-size: 0.9rem; color: var(--muted); }
+#sec-preferencias select, #sec-preferencias input { color: var(--text); min-width: 0; }
+#pref-dias { min-width: 6rem; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+#pref-limpiar { margin-top: 0.75rem; transition: background-color 0.15s ease, border-color 0.15s ease; }
+#pref-limpiar:hover:not(:disabled) { border-color: var(--accent-2); background: rgba(79, 157, 235, 0.15); }
+#pref-limpiar:disabled { opacity: 0.45; cursor: not-allowed; }
+#pref-contador { display: inline-block; margin: 0.75rem 0 0 0.75rem; font-weight: 600; color: var(--text); }
+#pref-mensaje:empty { display: none; }
+#pref-mensaje { margin-top: 0.5rem; padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid var(--error); }
+#sec-preferencias [aria-invalid="true"] { border-color: var(--error); }
+@media (max-width: 480px) {
+  #sec-preferencias .flex > label { flex: 1 1 100%; }
+  #pref-dias { width: 100%; }
+  #sec-preferencias input, #sec-preferencias select { width: 100%; }
+}
