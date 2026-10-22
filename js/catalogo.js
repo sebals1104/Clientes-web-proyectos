@@ -98,9 +98,11 @@ function renderCatalogo() {
   const trimestre = filtro && filtro.value !== '' ? filtro.value : null;
   const resultado = buscarMaterias({ texto: texto, trimestre: trimestre });
 
-  const foco = document.activeElement && document.activeElement.getAttribute
-    ? document.activeElement.getAttribute('data-codigo') : null;
-  const accionFoco = foco && document.activeElement.getAttribute('data-accion');
+  // Solo se restaura el foco si estaba dentro del catálogo: los botones de la
+  // selección también llevan data-codigo y no deben arrastrar el foco hasta aquí.
+  const activo = document.activeElement;
+  const foco = activo && lista.contains(activo) ? activo.getAttribute('data-codigo') : null;
+  const accionFoco = foco && activo.getAttribute('data-accion');
   lista.textContent = '';
   if (resultado.length === 0) {
     lista.appendChild(crearElemento('div', { clase: 'estado-vacio' }, [
