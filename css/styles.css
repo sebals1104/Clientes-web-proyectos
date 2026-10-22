@@ -176,3 +176,26 @@ button.rej-sesion:focus-visible { outline: 2px solid var(--accent-2); outline-of
   #pref-dias { width: 100%; }
   #sec-preferencias input, #sec-preferencias select { width: 100%; }
 }
+
+/* ===========================================================================
+   Fase 6 — Punto de entrada y coordinación
+   =========================================================================== */
+.estado-panel {
+  margin-top: 0.6rem;
+  padding: 0.45rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: rgba(79, 157, 235, 0.08);
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+.estado-panel[aria-live="polite"] { overflow-wrap: anywhere; }
+.form-manual-error { color: var(--error); }
+.err { display: block; font-size: 0.78rem; margin-top: 0.2rem; }
+#form-manual [aria-invalid="true"] { border-color: var(--error); }
+#manuales-lista .card { display: grid; gap: 0.35rem; }
+#manuales-lista .flex { align-items: center; }
+@media (max-width: 480px) {
+  .estado-panel { font-size: 0.78rem; }
+}

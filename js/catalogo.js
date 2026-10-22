@@ -137,12 +137,3 @@ function inicializarCatalogo() {
   suscribirCambioSeleccion(renderCatalogo);
   renderCatalogo();
 }
-
-// Arranque provisional de la Fase 2: app.js (Fase 6) asumirá la coordinación
-// y este bloque debe eliminarse entonces.
-if (typeof document !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', function () {
-    inicializarSeleccion();
-    inicializarCatalogo();
-  });
-}

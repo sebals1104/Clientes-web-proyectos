@@ -3,6 +3,22 @@
 
 let horarioDefinitivo = null;
 
+const suscriptoresResumen = [];
+
+function suscribirCambioResumen(callback) {
+  if (typeof callback === 'function') suscriptoresResumen.push(callback);
+}
+
+function notificarCambioResumen(detalle) {
+  suscriptoresResumen.forEach(cb => {
+    try {
+      cb(detalle || {});
+    } catch (error) {
+      console.error('Fallo en un manejador del resumen:', error);
+    }
+  });
+}
+
 /* ---------- Lógica pura ---------- */
 
 function filasResumen(resultado) {
@@ -39,6 +55,7 @@ function elegirHorarioDefinitivo(resultado) {
   const filas = filasResumen(copia);
   horarioDefinitivo = { resultado: copia, filas, totalUc: totalUcResumen(filas) };
   renderResumen();
+  notificarCambioResumen({ definido: true, filas: filas.length, totalUc: horarioDefinitivo.totalUc });
   return { ok: true, mensaje: 'Horario definitivo guardado: ' + filas.length + ' materias, ' + horarioDefinitivo.totalUc + ' UC.' };
 }
 
@@ -53,6 +70,7 @@ function esHorarioDefinitivo(resultado) {
 function borrarHorarioDefinitivo() {
   horarioDefinitivo = null;
   renderResumen();
+  notificarCambioResumen({ definido: false });
 }
 
 /* ---------- Render ---------- */
@@ -177,10 +195,4 @@ function inicializarResumen() {
   if (imprimir) imprimir.addEventListener('click', function () { window.print(); });
   document.addEventListener('rejilla:cambio', actualizarBotonDefinitivo);
   renderResumen();
-}
-
-// Arranque provisional de la Fase 5: app.js (Fase 6) asumirá la coordinación
-// y este bloque debe eliminarse entonces.
-if (typeof document !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', inicializarResumen);
 }

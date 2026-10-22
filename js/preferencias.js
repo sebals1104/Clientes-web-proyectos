@@ -103,6 +103,33 @@ function textoContadorPreferencias(mostrados, total) {
 /* ---------- Estado y render ---------- */
 
 let resultadosOrigenPreferencias = [];
+let resultadosVisiblesPreferencias = [];
+
+const suscriptoresPreferencias = [];
+
+function suscribirCambioPreferencias(callback) {
+  if (typeof callback === 'function') suscriptoresPreferencias.push(callback);
+}
+
+function notificarCambioPreferencias(detalle) {
+  suscriptoresPreferencias.forEach(cb => {
+    try {
+      cb(detalle || {});
+    } catch (error) {
+      console.error('Fallo en un manejador de preferencias:', error);
+    }
+  });
+}
+
+// Lista completa que entrega el generador, sin filtros ni orden.
+function obtenerResultadosOrigenPreferencias() {
+  return resultadosOrigenPreferencias.slice();
+}
+
+// Lista que se muestra en la rejilla, ya filtrada y ordenada.
+function obtenerResultadosVisiblesPreferencias() {
+  return resultadosVisiblesPreferencias.slice();
+}
 
 function hayDomPreferencias() {
   return typeof document !== 'undefined' && !!document.getElementById('pref-contador');
@@ -147,6 +174,7 @@ function recalcularPreferencias() {
   const filtros = hayDomPreferencias() ? leerFiltrosPreferencias() : FILTROS_VACIOS;
   const orden = hayDomPreferencias() ? leerOrdenPreferencias() : '';
   const r = aplicarPreferencias(resultadosOrigenPreferencias, filtros, orden);
+  resultadosVisiblesPreferencias = r.visibles;
   if (hayDomPreferencias()) {
     mostrarMensajePreferencias(r.error);
     const contador = document.getElementById('pref-contador');
@@ -158,6 +186,13 @@ function recalcularPreferencias() {
     const hayOrigen = resultadosOrigenPreferencias.length > 0;
     establecerResultadosRejilla(r.visibles, hayOrigen ? { mensajeVacio: mensajeVacioPreferencias(r.error) } : undefined);
   }
+  notificarCambioPreferencias({
+    mostrados: r.mostrados,
+    total: r.total,
+    error: r.error,
+    filtros: filtros,
+    orden: orden
+  });
   return r;
 }
 
@@ -199,10 +234,4 @@ function inicializarPreferencias() {
   contador.insertAdjacentElement('beforebegin', limpiar);
   contador.insertAdjacentElement('afterend', crearElemento('div', { id: 'pref-mensaje', clase: 'error', role: 'alert' }));
   recalcularPreferencias();
-}
-
-// Arranque provisional de la Fase 4: app.js (Fase 6) asumirá la coordinación
-// y este bloque debe eliminarse entonces.
-if (typeof document !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', inicializarPreferencias);
 }

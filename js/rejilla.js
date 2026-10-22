@@ -379,9 +379,3 @@ function inicializarRejilla() {
   });
   renderRejilla();
 }
-
-// Arranque provisional de la Fase 5: app.js (Fase 6) asumirá la coordinación
-// y este bloque debe eliminarse entonces.
-if (typeof document !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', inicializarRejilla);
-}

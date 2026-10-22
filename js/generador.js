@@ -35,8 +35,14 @@ function suscribirCambioGenerador(callback) {
   if (typeof callback === 'function') suscriptoresGenerador.push(callback);
 }
 
-function notificarCambioGenerador() {
-  renderGenerador();
+function notificarCambioGenerador(detalle) {
+  suscriptoresGenerador.forEach(cb => {
+    try {
+      cb(detalle || {});
+    } catch (error) {
+      console.error('Fallo en un manejador del generador:', error);
+    }
+  });
 }
 
 function invalidarResultados() {
@@ -47,10 +53,10 @@ function invalidarResultados() {
   resultadosValidos = false;
   resultadosInvalidados = generadoAlgunaVez;
   firmaGenerador = '';
-  // Preferencias reinicia su contador y vacía la rejilla; sin ellas, se limpia la rejilla directamente.
   if (typeof establecerResultadosPreferencias === 'function') establecerResultadosPreferencias([]);
   else if (typeof limpiarResultadosRejilla === 'function') limpiarResultadosRejilla();
   renderGenerador();
+  notificarCambioGenerador({ total: 0, invalidados: true });
 }
 
 function resultadoHayInformacion() {
@@ -120,6 +126,7 @@ function generarHorarios() {
     firmaGenerador = '';
     mensajeGenerador = 'Seleccione al menos una materia antes de generar horarios.';
     renderGenerador();
+    notificarCambioGenerador({ total: 0, invalidados: true });
     return { ok: false, total: 0, combinaciones: [], mensaje: mensajeGenerador };
   }
 
@@ -145,11 +152,13 @@ function generarHorarios() {
     }
     mensajeGenerador = mensaje;
     renderGenerador();
+    notificarCambioGenerador({ total: 0, invalidados: false, incompatibles: incompatibles });
     return { ok: false, total: 0, combinaciones: [], incompatibles: incompatibles, mensaje: mensaje, estadisticas: estadisticas };
   }
 
   mensajeGenerador = '';
   renderGenerador();
+  notificarCambioGenerador({ total: combinaciones.length, invalidados: false });
 
   return {
     ok: true,
@@ -252,8 +261,4 @@ function inicializarGenerador() {
   }
 
   renderGenerador();
-}
-
-if (typeof document !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', inicializarGenerador);
 }
