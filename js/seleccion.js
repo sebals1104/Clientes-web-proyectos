@@ -4,6 +4,7 @@ let topeUc = TOPE_UC_POR_DEFECTO;
 let seleccion = [];
 let mensajeSeleccion = { texto: '', tipo: 'muted' };
 const suscriptoresSeleccion = [];
+const seleccionExpandidas = new Set();
 
 function obtenerTopeUc() {
   return topeUc;
@@ -78,6 +79,7 @@ function quitarMateriaSeleccion(codigo) {
   const idx = seleccion.findIndex(e => e.codigo === codigo);
   if (idx === -1) return { ok: false, mensaje: 'La materia ' + codigo + ' no está seleccionada.' };
   seleccion.splice(idx, 1);
+  seleccionExpandidas.delete(codigo);
   notificarCambioSeleccion();
   return { ok: true, mensaje: 'Materia ' + codigo + ' quitada.' };
 }
@@ -120,20 +122,20 @@ function fijarSeccion(codigo, seccionId) {
     return { ok: false, mensaje: 'La sección ' + seccionId + ' no existe en ' + codigo + '.' };
   }
   if (entrada.seccionesExcluidas.includes(seccionId)) {
-    return { ok: false, mensaje: 'La sección ' + seccionId + ' está excluida; inclúyala antes de fijarla.' };
+    return { ok: false, mensaje: 'La sección ' + seccionId + ' está excluida; inclúyala antes de elegirla.' };
   }
   entrada.seccionFijada = seccionId;
   notificarCambioSeleccion();
-  return { ok: true, mensaje: 'Sección ' + seccionId + ' fijada en ' + codigo + '.' };
+  return { ok: true, mensaje: 'Clase elegida en ' + codigo + ': sección ' + seccionId + '.' };
 }
 
 function quitarFijadoSeccion(codigo) {
   const entrada = buscarEntrada(codigo);
   if (!entrada) return { ok: false, mensaje: 'La materia ' + codigo + ' no está seleccionada.' };
-  if (entrada.seccionFijada === null) return { ok: false, mensaje: 'La materia ' + codigo + ' no tiene sección fijada.' };
+  if (entrada.seccionFijada === null) return { ok: false, mensaje: 'La materia ' + codigo + ' no tiene una clase elegida.' };
   entrada.seccionFijada = null;
   notificarCambioSeleccion();
-  return { ok: true, mensaje: 'Se quitó el fijado de ' + codigo + '.' };
+  return { ok: true, mensaje: 'Se quitó la clase elegida de ' + codigo + '.' };
 }
 
 function alternarExclusionSeccion(codigo, seccionId) {
@@ -170,6 +172,7 @@ function seccionesDisponibles(codigo) {
 
 function reiniciarSeleccion() {
   seleccion = [];
+  seleccionExpandidas.clear();
   topeUc = TOPE_UC_POR_DEFECTO;
   mensajeSeleccion = { texto: '', tipo: 'muted' };
   renderSeleccion();
@@ -217,7 +220,7 @@ function crearFilaSeccion(entrada, seccion, totalNoExcluidas) {
   const excluida = entrada.seccionesExcluidas.includes(seccion.id);
   const claveBase = entrada.codigo + '|' + seccion.id;
 
-  const estado = fijada ? 'Fijada' : (excluida ? 'Excluida' : '');
+  const estado = fijada ? 'Elegida' : (excluida ? 'Excluida' : '');
   const botonFijar = crearElemento('button', {
     type: 'button',
     clase: 'btn-sel' + (fijada ? ' activo' : ''),
@@ -227,7 +230,7 @@ function crearFilaSeccion(entrada, seccion, totalNoExcluidas) {
     'data-foco': claveBase + '|fijar',
     'aria-pressed': fijada ? 'true' : 'false',
     disabled: excluida,
-    texto: fijada ? 'Quitar fijado' : 'Fijar'
+    texto: fijada ? 'Quitar elección' : 'Elegir esta clase'
   });
   const ultima = !excluida && totalNoExcluidas <= 1;
   const botonExcluir = crearElemento('button', {
@@ -272,6 +275,29 @@ function crearTarjetaSeleccion(entrada) {
     'aria-label': 'Quitar ' + materia.nombre + ' de la selección',
     texto: 'Quitar'
   });
+  const fijadaId = entrada.seccionFijada;
+  const expandida = fijadaId !== null && seleccionExpandidas.has(entrada.codigo);
+  if (fijadaId === null) seleccionExpandidas.delete(entrada.codigo);
+  const visibles = fijadaId !== null && !expandida
+    ? materia.secciones.filter(s => s.id === fijadaId)
+    : materia.secciones;
+  const pista = fijadaId === null
+    ? crearElemento('p', {
+      clase: 'muted sel-pista',
+      texto: 'Sin clase elegida: el generador probará ' + totalNoExcluidas + (totalNoExcluidas === 1 ? ' sección.' : ' secciones.')
+    })
+    : null;
+  const cambiar = fijadaId !== null
+    ? crearElemento('button', {
+      type: 'button',
+      clase: 'btn-sel sel-cambiar',
+      'data-accion': 'cambiar',
+      'data-codigo': entrada.codigo,
+      'data-foco': entrada.codigo + '|cambiar',
+      'aria-expanded': expandida ? 'true' : 'false',
+      texto: expandida ? 'Ocultar otras clases' : 'Cambiar clase'
+    })
+    : null;
   return crearElemento('article', { clase: 'card sel-card' }, [
     crearElemento('header', { clase: 'sel-card-cabecera' }, [
       crearElemento('div', {}, [
@@ -281,8 +307,10 @@ function crearTarjetaSeleccion(entrada) {
       ]),
       quitar
     ]),
+    pista,
     crearElemento('ul', { clase: 'sel-secciones' },
-      materia.secciones.map(s => crearFilaSeccion(entrada, s, totalNoExcluidas)))
+      visibles.map(s => crearFilaSeccion(entrada, s, totalNoExcluidas))),
+    cambiar
   ]);
 }
 
@@ -352,7 +380,12 @@ function inicializarSeleccion() {
       else if (accion === 'excluir') r = alternarExclusionSeccion(codigo, seccion);
       else if (accion === 'fijar') {
         const e = buscarEntrada(codigo);
+        seleccionExpandidas.delete(codigo);
         r = e && e.seccionFijada === seccion ? quitarFijadoSeccion(codigo) : fijarSeccion(codigo, seccion);
+      } else if (accion === 'cambiar') {
+        if (!seleccionExpandidas.delete(codigo)) seleccionExpandidas.add(codigo);
+        renderSeleccion();
+        return;
       }
       if (r) reportarResultado(r);
     });
