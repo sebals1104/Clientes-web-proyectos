@@ -1,19 +1,31 @@
 :root {
-   --fondo:          #F7F6F3;
-   --superficie:     #FFFFFF;
-   --texto:          #2C3330;
-   --texto-apagado:  #5E6B64;
-   --acento:         #3F6F63;
-   --borde:          #CBC5B8; 
-   --error:          #9A3B32;  
-   --materia-1: #0d906d;
-   --materia-2: #3d57a9;
-   --materia-3: #cd633c;
-   --materia-4: #d5ab3a;
-   --materia-5: #9d4576;
-   --materia-6: #2ba9c2;  
-   --materia-7: #306324;  
-   --materia-8: #b28fdb;  
+  /* Colores base */
+  --negro:         #111111;
+  --blanco:        #ffffff;
+  --azul-noche:    #0f1026;
+  --azul-oscuro:   #1b1f3b;
+  --azul-profundo: #141729;
+  --gris-oscuro:   #2d3142;
+  --gris-claro:    #bfc0c0;
+  --blanco-hueso:  #f4f4f9;
+
+  /* Colores de acento y estados */
+  --naranja:       #ef8354;
+  --azul:          #4f9deb;
+  --verde:         #3fb984;
+  --verde-oscuro:  #3f6f63;
+  --rojo:          #d64545;
+
+  /* Colores de las materias (rejilla.js usa var(--materia-N)) */
+  --materia-1:     #0d906d;
+  --materia-2:     #3d57a9;
+  --materia-3:     #cd633c;
+  --materia-4:     #d5ab3a;
+  --materia-5:     #9d4576;
+  --materia-6:     #2ba9c2;
+  --materia-7:     #306324;
+  --materia-8:     #b28fdb;
+
+  /* Escala de la rejilla: pixeles por minuto */
+  --rej-px-minuto: 1.4px;
 }
-
-
