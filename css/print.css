@@ -1,10 +1,3 @@
-/* ===========================================================================
-   Impresión del horario definitivo (§4.9, §5.1)
-   Monocromo por diseño: la identidad de materia se resuelve con el código y
-   una trama de borde, nunca con color (regla 6 de tokens.css).
-   Hoja A4 horizontal: la rejilla ocupa la primera página y la tabla empieza
-   en la segunda, así ninguna de las dos se comprime hasta ser ilegible.
-   =========================================================================== */
 @page { size: A4 landscape; margin: 10mm; }
 
 @media print {
