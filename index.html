@@ -4,21 +4,25 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Holgura - Armador de Horarios</title>
+  <meta name="description" content="Armador de horarios académicos: elige materias, genera combinaciones sin choques, ordénalas y guarda tu horario definitivo.">
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="css/print.css" media="print">
 </head>
 <body>
+  <noscript>
+    <p class="muted">Holgura necesita JavaScript para funcionar. Actívalo en tu navegador y recarga la página.</p>
+  </noscript>
   <header>
     <h1>Holgura</h1>
-    <p class="muted">Armador de horarios académico </p>
+    <p class="muted">Armador de horarios académico</p>
   </header>
   <main>
     <section id="sec-catalogo">
       <h2>Catálogo de Materias</h2>
       <div class="flex">
-        <input id="busqueda" type="search" placeholder="Buscar por código o nombre">
-        <select id="filtro-trimestre">
+        <input id="busqueda" type="search" placeholder="Buscar por código o nombre" aria-label="Buscar materia por código o nombre">
+        <select id="filtro-trimestre" aria-label="Filtrar catálogo por trimestre">
           <option value="">Todos los trimestres</option>
           <option value="1">Trimestre 1</option>
           <option value="2">Trimestre 2</option>
@@ -33,9 +37,9 @@
 
     <section id="sec-seleccion">
       <h2>Selección</h2>
-      <div class="muted">Materias: <span id="sel-cant">0</span> | Total UC: <span id="sel-uc">0</span> | Tope UC: <span id="sel-tope">28</span></div>
+      <p class="muted">Materias: <span id="sel-cant">0</span> | Total UC: <span id="sel-uc">0</span> | Tope UC: <span id="sel-tope">28</span></p>
       <div class="flex">
-        <select id="sel-trim-completo">
+        <select id="sel-trim-completo" aria-label="Trimestre para agregar completo">
           <option value="">Agregar trimestre completo</option>
           <option value="1">Trimestre 1</option>
           <option value="2">Trimestre 2</option>
@@ -47,7 +51,7 @@
         <label class="flex"><span>Tope UC:</span><input id="tope-uc" type="number" min="1" step="1"></label>
       </div>
       <div id="sel-lista" class="grid"></div>
-      <div id="sel-msg" class="muted"></div>
+      <div id="sel-msg" class="muted" role="status"></div>
     </section>
 
     <section id="sec-manuales">
@@ -58,7 +62,7 @@
           <div class="grid" style="grid-template-columns: repeat(auto-fit,minmax(220px,1fr));">
             <label>Código<input name="codigo" required></label>
             <label>Nombre<input name="nombre" required></label>
-              <label>Trimestre<select name="trimestre" required>
+            <label>Trimestre<select name="trimestre" required>
               <option value="">--</option><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4">4</option><option value="5">5</option>
             </select></label>
             <label>UC<input name="uc" type="number" min="1" max="5" step="1" required></label>
@@ -68,7 +72,7 @@
           <div class="flex">
             <button type="button" id="btn-add-seccion" class="secondary">Agregar sección</button>
             <button type="submit">Guardar materia manual</button>
-            <span id="form-manual-msg" class="muted"></span>
+            <span id="form-manual-msg" class="muted" role="status"></span>
           </div>
         </form>
       </details>
@@ -77,16 +81,16 @@
 
     <section id="sec-choques">
       <h2>Choques e incompatibilidades</h2>
-      <div id="choques-info" class="muted"></div>
+      <div id="choques-info" class="muted" aria-live="polite"></div>
     </section>
 
     <section id="sec-generador">
       <h2>Generador</h2>
       <div class="flex">
         <button id="btn-generar">Generar horarios</button>
-        <span class="muted" id="gen-total">0 combinaciones</span>
+        <span class="muted" id="gen-total" aria-live="polite">0 combinaciones</span>
       </div>
-      <div id="gen-msg" class="muted"></div>
+      <div id="gen-msg" class="muted" role="status"></div>
     </section>
 
     <section id="sec-preferencias">
@@ -104,20 +108,20 @@
           <option value="salida-temprana">Salida más temprana</option>
         </select></label>
       </div>
-      <div class="muted" id="pref-contador"></div>
+      <div class="muted" id="pref-contador" aria-live="polite"></div>
     </section>
 
     <section id="sec-rejilla">
       <h2>Rejilla semanal</h2>
       <div class="flex no-print">
         <button id="rej-anterior" class="secondary">Anterior</button>
-        <span class="muted" id="rej-pos">Opción 0 de 0</span>
+        <span class="muted" id="rej-pos" aria-live="polite">Opción 0 de 0</span>
         <button id="rej-siguiente" class="secondary">Siguiente</button>
         <button id="btn-definitivo">Elegir como horario definitivo</button>
       </div>
       <div id="rej-metricas" class="muted"></div>
       <div id="rej-grid" class="rejilla"></div>
-      <div id="rej-detalle" class="card"></div>
+      <div id="rej-detalle" class="card" aria-live="polite"></div>
     </section>
 
     <section id="sec-resumen">
@@ -127,7 +131,7 @@
       </div>
       <div id="res-rejilla"></div>
       <div id="res-tabla" class="card"></div>
-      <div id="res-total" class="muted"></div>
+      <div id="res-total" class="muted" aria-live="polite"></div>
     </section>
   </main>
 
