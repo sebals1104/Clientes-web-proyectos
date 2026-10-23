@@ -1,6 +1,6 @@
-# Holgura
+# Horasstudio
 
-**Holgura** es un armador de horarios académicos para crear, filtrar, comparar y guardar un horario definitivo sin solapamientos, a partir del catálogo de materias, secciones y bloques horarias de la asignación.
+**Horasstudio** es un armador de horarios académicos para crear, filtrar, comparar y guardar un horario definitivo sin solapamientos, a partir del catálogo de materias, secciones y bloques horarias de la asignación.
 
 ## Integrantes y división del trabajo
 

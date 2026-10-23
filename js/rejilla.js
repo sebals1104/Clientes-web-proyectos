@@ -1,41 +1,44 @@
-// Rejilla semanal (§4.8). La lógica pura no toca el DOM; el render queda
-// protegido para que el archivo cargue también fuera del navegador.
-
 // Dominio del campo `dia` definido por el enunciado.
 const DIAS_REJILLA = ['LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
 const SLOTS_COLOR_MATERIA = 8;
 
 /* ---------- Escala y ubicación ---------- */
 
+// Calcula el máximo común divisor de dos enteros.
 function mcdEnteros(a, b) {
-  while (b) { const t = b; b = a % b; a = t; }
+  while (b !== 0) {
+    const resto = a % b;
+    a = b;
+    b = resto;
+  }
   return a;
 }
 
+// Devuelve el inicio y fin (en minutos) de una sesión, o null si ningún bloque existe.
 function intervaloSesionMin(sesion) {
-  const porId = new Map(obtenerBloques().map(b => [b.id, b]));
-  const bloques = ((sesion && sesion.bloques) || []).map(id => porId.get(id)).filter(Boolean);
-  if (!bloques.length) return null;
+  const bloques = sesion.bloques.map(id => bloquesPorId.get(id)).filter(Boolean);
+  if (bloques.length === 0) return null;
   return {
-    ini: Math.min.apply(null, bloques.map(b => hhmmToMin(b.inicio))),
-    fin: Math.max.apply(null, bloques.map(b => hhmmToMin(b.fin)))
+    ini: Math.min(...bloques.map(bloque => hhmmToMin(bloque.inicio))),
+    fin: Math.max(...bloques.map(bloque => hhmmToMin(bloque.fin)))
   };
 }
 
-// Escala vertical derivada de BLOQUES: nada del dataset queda fijo en el código.
+// Deriva la escala vertical de los bloques: nada del dataset queda fijo en el código.
 function escalaRejilla() {
   const bloques = obtenerBloques();
-  if (!bloques.length) return { inicio: 0, fin: 0, paso: 1, filas: 0 };
-  const inicios = bloques.map(b => hhmmToMin(b.inicio));
-  const fines = bloques.map(b => hhmmToMin(b.fin));
-  const inicio = Math.min.apply(null, inicios);
-  const fin = Math.max.apply(null, fines);
+  const inicios = bloques.map(bloque => hhmmToMin(bloque.inicio));
+  const fines = bloques.map(bloque => hhmmToMin(bloque.fin));
+  const inicio = Math.min(...inicios);
+  const fin = Math.max(...fines);
   let paso = 0;
-  inicios.concat(fines).forEach(m => { paso = mcdEnteros(paso, m - inicio); });
-  if (!paso) paso = 1;
+  inicios.concat(fines).forEach(minuto => {
+    paso = mcdEnteros(paso, minuto - inicio);
+  });
   return { inicio, fin, paso, filas: (fin - inicio) / paso };
 }
 
+// Calcula la fila de inicio y las filas que ocupa una sesión en la rejilla.
 function ubicacionSesion(ini, fin, escala) {
   return {
     filaInicio: (ini - escala.inicio) / escala.paso + 1,
@@ -43,36 +46,23 @@ function ubicacionSesion(ini, fin, escala) {
   };
 }
 
-/* ---------- Normalización y sesiones ---------- */
+/* ---------- Sesiones de un resultado ---------- */
 
+// Devuelve las entradas { materia, seccion } de un resultado; vacío si no hay resultado.
 function normalizarResultado(resultado) {
-  if (!Array.isArray(resultado)) return [];
-  const salida = [];
-  resultado.forEach(e => {
-    if (!e || typeof e !== 'object') return;
-    if (e.materia && typeof e.materia === 'object' && e.seccion && typeof e.seccion === 'object') {
-      salida.push({ materia: e.materia, seccion: e.seccion });
-      return;
-    }
-    const idSeccion = e.seccionId !== undefined ? e.seccionId
-      : (e.seccion && typeof e.seccion === 'object' ? e.seccion.id : e.seccion);
-    const materia = obtenerMateriaPorCodigo(e.codigo);
-    if (!materia || idSeccion === undefined || idSeccion === null) return;
-    const seccion = (materia.secciones || []).find(s => s.id === idSeccion);
-    if (seccion) salida.push({ materia, seccion });
-  });
-  return salida;
+  return resultado || [];
 }
 
+// Convierte un resultado en una lista de sesiones con sus minutos de inicio y fin.
 function sesionesDeResultado(resultado) {
   const sesiones = [];
   normalizarResultado(resultado).forEach(({ materia, seccion }) => {
-    (seccion.horario || []).forEach(h => {
-      const intervalo = intervaloSesionMin(h);
+    seccion.horario.forEach(horario => {
+      const intervalo = intervaloSesionMin(horario);
       if (!intervalo) return;
       sesiones.push({
         codigo: materia.codigo, nombre: materia.nombre, seccionId: seccion.id,
-        profesor: seccion.profesor, dia: h.dia, aula: h.aula,
+        profesor: seccion.profesor, dia: horario.dia, aula: horario.aula,
         ini: intervalo.ini, fin: intervalo.fin
       });
     });
@@ -80,57 +70,65 @@ function sesionesDeResultado(resultado) {
   return sesiones;
 }
 
+// Devuelve un texto que identifica la combinación de materias y secciones.
 function firmaResultado(resultado) {
   return normalizarResultado(resultado)
-    .map(e => e.materia.codigo + '#' + e.seccion.id)
+    .map(entrada => `${entrada.materia.codigo}#${entrada.seccion.id}`)
     .sort()
     .join('|');
 }
 
-/* ---------- Métricas (reutilizables por preferencias.js, §4.7) ---------- */
+/* ---------- Métricas (las usa también preferencias.js) ---------- */
 
+// Calcula días de asistencia, horas muertas, entrada más temprana y salida más tardía.
 function metricasResultado(resultado) {
   const sesiones = sesionesDeResultado(resultado);
-  if (!sesiones.length) return { diasAsistencia: 0, horasMuertasMin: 0, entradaMin: null, salidaMin: null };
-  const porDia = new Map();
-  sesiones.forEach(s => {
-    if (!porDia.has(s.dia)) porDia.set(s.dia, []);
-    porDia.get(s.dia).push(s);
+  if (sesiones.length === 0) {
+    return { diasAsistencia: 0, horasMuertasMin: 0, entradaMin: null, salidaMin: null };
+  }
+  const sesionesPorDia = new Map();
+  sesiones.forEach(sesion => {
+    if (!sesionesPorDia.has(sesion.dia)) sesionesPorDia.set(sesion.dia, []);
+    sesionesPorDia.get(sesion.dia).push(sesion);
   });
-  let muertas = 0;
-  porDia.forEach(lista => {
-    lista.sort((a, b) => a.ini - b.ini);
-    let finMax = lista[0].fin;
-    for (let i = 1; i < lista.length; i++) {
-      if (lista[i].ini > finMax) muertas += lista[i].ini - finMax;
-      finMax = Math.max(finMax, lista[i].fin);
+  let horasMuertasMin = 0;
+  sesionesPorDia.forEach(delDia => {
+    delDia.sort((a, b) => a.ini - b.ini);
+    let finMasTardio = delDia[0].fin;
+    for (let i = 1; i < delDia.length; i++) {
+      if (delDia[i].ini > finMasTardio) horasMuertasMin += delDia[i].ini - finMasTardio;
+      finMasTardio = Math.max(finMasTardio, delDia[i].fin);
     }
   });
   return {
-    diasAsistencia: porDia.size,
-    horasMuertasMin: muertas,
-    entradaMin: Math.min.apply(null, sesiones.map(s => s.ini)),
-    salidaMin: Math.max.apply(null, sesiones.map(s => s.fin))
+    diasAsistencia: sesionesPorDia.size,
+    horasMuertasMin: horasMuertasMin,
+    entradaMin: Math.min(...sesiones.map(sesion => sesion.ini)),
+    salidaMin: Math.max(...sesiones.map(sesion => sesion.fin))
   };
 }
 
+// Convierte minutos en texto: "45 min", "2 h" o "1 h 30 min".
 function formatearDuracion(min) {
-  const h = Math.floor(min / 60);
-  const m = min % 60;
-  if (!h) return m + ' min';
-  return m ? h + ' h ' + m + ' min' : h + ' h';
+  const horas = Math.floor(min / 60);
+  const minutos = min % 60;
+  if (horas === 0) return `${minutos} min`;
+  if (minutos === 0) return `${horas} h`;
+  return `${horas} h ${minutos} min`;
 }
 
 /* ---------- Color estable por materia (reglas de tokens.css) ---------- */
 
 const coloresMaterias = new Map();
 
+// Asigna un número de color a cada materia nueva, en orden de aparición.
 function asignarColoresMaterias(codigos) {
-  (codigos || []).forEach(c => {
-    if (!coloresMaterias.has(c)) coloresMaterias.set(c, coloresMaterias.size + 1);
+  codigos.forEach(codigo => {
+    if (!coloresMaterias.has(codigo)) coloresMaterias.set(codigo, coloresMaterias.size + 1);
   });
 }
 
+// Devuelve el slot de color (1 a 8) de una materia.
 function slotColorMateria(codigo) {
   asignarColoresMaterias([codigo]);
   return ((coloresMaterias.get(codigo) - 1) % SLOTS_COLOR_MATERIA) + 1;
@@ -141,176 +139,213 @@ function slotColorMateria(codigo) {
 let resultadosRejilla = [];
 let indiceRejilla = 0;
 let mensajeVacioRejilla = null;
-let sesionActivaRejilla = null;
 let elementoActivoRejilla = null;
 
-function hayDomRejilla() {
-  return typeof document !== 'undefined' && !!document.getElementById('rej-grid');
-}
-
-// `opciones.mensajeVacio` ({ titulo, texto }) reemplaza el estado vacío por defecto,
-// p. ej. cuando los filtros de preferencias excluyen todas las combinaciones.
-function establecerResultadosRejilla(resultados, opciones) {
-  resultadosRejilla = Array.isArray(resultados) ? resultados.slice() : [];
-  mensajeVacioRejilla = (opciones && opciones.mensajeVacio) || null;
+// Guarda los resultados a mostrar; `opciones.mensajeVacio` ({ titulo, texto })
+// reemplaza el aviso por defecto, p. ej. cuando los filtros excluyen todo.
+function establecerResultadosRejilla(resultados, opciones = {}) {
+  resultadosRejilla = resultados.slice();
+  mensajeVacioRejilla = opciones.mensajeVacio || null;
   indiceRejilla = 0;
-  resultadosRejilla.forEach(r => {
-    asignarColoresMaterias(normalizarResultado(r).map(e => e.materia.codigo));
+  resultadosRejilla.forEach(resultado => {
+    asignarColoresMaterias(normalizarResultado(resultado).map(entrada => entrada.materia.codigo));
   });
   renderRejilla();
 }
 
-function limpiarResultadosRejilla() {
-  resultadosRejilla = [];
-  mensajeVacioRejilla = null;
-  indiceRejilla = 0;
-  renderRejilla();
-}
-
+// Devuelve el resultado que se está mostrando, o null.
 function obtenerResultadoActual() {
   return resultadosRejilla[indiceRejilla] || null;
 }
 
+// Pasa a la opción siguiente, si hay.
 function irResultadoSiguiente() {
   if (indiceRejilla < resultadosRejilla.length - 1) indiceRejilla++;
   renderRejilla();
 }
 
+// Vuelve a la opción anterior, si hay.
 function irResultadoAnterior() {
   if (indiceRejilla > 0) indiceRejilla--;
   renderRejilla();
 }
 
+// Devuelve el texto "Opción X de Y".
 function textoPosicionRejilla() {
   const total = resultadosRejilla.length;
-  return 'Opción ' + (total ? indiceRejilla + 1 : 0) + ' de ' + total;
+  const posicion = total === 0 ? 0 : indiceRejilla + 1;
+  return `Opción ${posicion} de ${total}`;
 }
 
-/* ---------- Render ---------- */
+/* ---------- Construcción de la rejilla ---------- */
 
-function textoHorasSesion(s) {
-  return minutosAHhmm(s.ini) + '–' + minutosAHhmm(s.fin);
+// Convierte el inicio y fin de una sesión en "HH:MM–HH:MM".
+function textoHorasSesion(sesion) {
+  return `${minutosAHhmm(sesion.ini)}–${minutosAHhmm(sesion.fin)}`;
 }
 
+// Devuelve los minutos que llevan etiqueta de hora en el eje vertical.
 function etiquetasEjeRejilla(escala) {
   const bloques = obtenerBloques();
-  const regulares = bloques.filter(b => b.tipo === 'regular');
-  const base = regulares.length ? regulares : bloques;
-  const marcas = new Set(base.map(b => hhmmToMin(b.inicio)));
+  const regulares = bloques.filter(bloque => bloque.tipo === 'regular');
+  const base = regulares.length > 0 ? regulares : bloques;
+  const marcas = new Set(base.map(bloque => hhmmToMin(bloque.inicio)));
   return Array.from(marcas).sort((a, b) => a - b).concat(escala.fin);
 }
 
-function construirRejilla(resultado, opciones) {
-  const opts = opciones || {};
-  const escala = escalaRejilla();
-  const grid = crearElemento('div', { clase: 'rejilla-grid' });
+// Coloca un elemento en la columna y fila indicadas de la rejilla CSS.
+function ubicarEnGrid(elemento, columna, fila) {
+  elemento.style.gridColumn = columna;
+  elemento.style.gridRow = fila;
+}
+
+// Crea el contenedor con las columnas de días y las filas de la escala.
+function crearGridBase(escala) {
+  const grid = document.createElement('div');
+  grid.className = 'rejilla-grid';
   // Altura por minuto en CSS (--rej-px-minuto) para que print.css pueda reducirla.
-  const alto = 'max(4px, calc(' + escala.paso + ' * var(--rej-px-minuto, 1.4px)))';
-  grid.style.gridTemplateColumns = '3.5rem repeat(' + DIAS_REJILLA.length + ', minmax(7rem, 1fr))';
-  grid.style.gridTemplateRows = 'auto repeat(' + escala.filas + ', ' + alto + ')';
+  const alto = `max(4px, calc(${escala.paso} * var(--rej-px-minuto, 1.4px)))`;
+  grid.style.gridTemplateColumns = `3.5rem repeat(${DIAS_REJILLA.length}, minmax(7rem, 1fr))`;
+  grid.style.gridTemplateRows = `auto repeat(${escala.filas}, ${alto})`;
+  return grid;
+}
 
-  grid.appendChild(crearElemento('div', { clase: 'rej-esquina' }));
+// Agrega la esquina y los encabezados de los días.
+function agregarCabecerasDias(grid) {
+  const esquina = document.createElement('div');
+  esquina.className = 'rej-esquina';
+  grid.appendChild(esquina);
   DIAS_REJILLA.forEach((dia, i) => {
-    const cab = crearElemento('div', { clase: 'rej-dia', texto: dia });
-    cab.style.gridColumn = String(i + 2);
-    cab.style.gridRow = '1';
-    grid.appendChild(cab);
+    const cabecera = document.createElement('div');
+    cabecera.className = 'rej-dia';
+    cabecera.textContent = dia;
+    ubicarEnGrid(cabecera, String(i + 2), '1');
+    grid.appendChild(cabecera);
   });
+}
 
-  etiquetasEjeRejilla(escala).forEach(min => {
-    const fila = (min - escala.inicio) / escala.paso;
+// Agrega las horas del eje vertical y sus líneas guía.
+function agregarEjeHoras(grid, escala) {
+  etiquetasEjeRejilla(escala).forEach(minuto => {
+    const fila = (minuto - escala.inicio) / escala.paso;
     if (!Number.isInteger(fila) || fila < 0 || fila > escala.filas) return;
-    const final = fila === escala.filas;
-    if (!final) {
-      const guia = crearElemento('div', { clase: 'rej-guia', 'aria-hidden': 'true' });
-      guia.style.gridColumn = '1 / -1';
-      guia.style.gridRow = String(fila + 2);
+    const esFinal = fila === escala.filas;
+    if (!esFinal) {
+      const guia = document.createElement('div');
+      guia.className = 'rej-guia';
+      guia.setAttribute('aria-hidden', 'true');
+      ubicarEnGrid(guia, '1 / -1', String(fila + 2));
       grid.appendChild(guia);
     }
-    const hora = crearElemento('div', { clase: 'rej-hora' + (final ? ' final' : ''), texto: minutosAHhmm(min) });
-    hora.style.gridColumn = '1';
-    hora.style.gridRow = String(final ? fila + 1 : fila + 2);
+    const hora = document.createElement('div');
+    hora.className = 'rej-hora';
+    if (esFinal) hora.classList.add('final');
+    hora.textContent = minutosAHhmm(minuto);
+    ubicarEnGrid(hora, '1', String(esFinal ? fila + 1 : fila + 2));
     grid.appendChild(hora);
   });
+}
 
-  sesionesDeResultado(resultado).forEach(s => {
-    const col = DIAS_REJILLA.indexOf(s.dia);
-    if (col < 0) return;
-    const { filaInicio, span } = ubicacionSesion(s.ini, s.fin, escala);
-    const slot = slotColorMateria(s.codigo);
-    const etiqueta = s.codigo + ' ' + s.nombre + ', sección ' + s.seccionId + ', ' + s.dia + ' ' +
-      textoHorasSesion(s) + ', aula ' + s.aula;
-    const el = crearElemento(opts.interactiva ? 'button' : 'div', {
-      clase: 'rej-sesion',
-      type: opts.interactiva ? 'button' : null,
-      'aria-pressed': opts.interactiva ? 'false' : null,
-      'aria-label': etiqueta,
-      'data-slot': slot
-    }, [
-      crearElemento('strong', { clase: 'rej-sesion-codigo', texto: s.codigo }),
-      crearElemento('span', { texto: 'Sec. ' + s.seccionId }),
-      crearElemento('span', { clase: 'rej-sesion-aula', texto: s.aula })
-    ]);
-    el.style.setProperty('--rej-color', 'var(--materia-' + slot + ')');
-    el.style.gridColumn = String(col + 2);
-    el.style.gridRow = String(filaInicio + 1) + ' / span ' + span;
-    if (opts.interactiva) {
-      el.addEventListener('click', function () {
-        if (typeof opts.alSeleccionar === 'function') opts.alSeleccionar(s, el);
-      });
-    }
-    grid.appendChild(el);
+// Crea la caja de una sesión; es un botón si la rejilla es interactiva.
+function crearSesionRejilla(sesion, columna, escala, opciones) {
+  const { filaInicio, span } = ubicacionSesion(sesion.ini, sesion.fin, escala);
+  const slot = slotColorMateria(sesion.codigo);
+
+  const codigo = document.createElement('strong');
+  codigo.className = 'rej-sesion-codigo';
+  codigo.textContent = sesion.codigo;
+  const seccion = document.createElement('span');
+  seccion.textContent = `Sec. ${sesion.seccionId}`;
+  const aula = document.createElement('span');
+  aula.className = 'rej-sesion-aula';
+  aula.textContent = sesion.aula;
+
+  const caja = document.createElement(opciones.interactiva ? 'button' : 'div');
+  caja.className = 'rej-sesion';
+  caja.dataset.slot = slot;
+  caja.setAttribute('aria-label',
+    `${sesion.codigo} ${sesion.nombre}, sección ${sesion.seccionId}, ${sesion.dia} ${textoHorasSesion(sesion)}, aula ${sesion.aula}`);
+  caja.style.setProperty('--rej-color', `var(--materia-${slot})`);
+  ubicarEnGrid(caja, String(columna + 2), `${filaInicio + 1} / span ${span}`);
+  caja.appendChild(codigo);
+  caja.appendChild(seccion);
+  caja.appendChild(aula);
+  if (opciones.interactiva) {
+    caja.type = 'button';
+    caja.setAttribute('aria-pressed', 'false');
+    caja.addEventListener('click', function () {
+      opciones.alSeleccionar(sesion, caja);
+    });
+  }
+  return caja;
+}
+
+// Construye la rejilla semanal de un resultado (también la usa resumen.js).
+function construirRejilla(resultado, opciones) {
+  const escala = escalaRejilla();
+  const grid = crearGridBase(escala);
+  agregarCabecerasDias(grid);
+  agregarEjeHoras(grid, escala);
+  sesionesDeResultado(resultado).forEach(sesion => {
+    const columna = DIAS_REJILLA.indexOf(sesion.dia);
+    if (columna === -1) return;
+    grid.appendChild(crearSesionRejilla(sesion, columna, escala, opciones));
   });
   return grid;
 }
 
+/* ---------- Métricas en pantalla ---------- */
+
+// Devuelve "HH:MM", o una raya si no hay dato.
+function textoHoraMetrica(minutos) {
+  if (minutos === null) return '—';
+  return minutosAHhmm(minutos);
+}
+
+// Dibuja las cuatro métricas del resultado.
 function renderMetricasRejilla(resultado) {
-  const cont = document.getElementById('rej-metricas');
-  if (!cont) return;
-  cont.textContent = '';
-  if (!normalizarResultado(resultado).length) return;
-  const m = metricasResultado(resultado);
-  const sinDato = v => (v === null ? '—' : minutosAHhmm(v));
-  [
-    ['Días de asistencia', String(m.diasAsistencia)],
-    ['Horas muertas', formatearDuracion(m.horasMuertasMin)],
-    ['Entrada más temprana', sinDato(m.entradaMin)],
-    ['Salida más tardía', sinDato(m.salidaMin)]
-  ].forEach(([titulo, valor]) => {
-    cont.appendChild(crearElemento('div', { clase: 'rej-metrica' }, [
-      crearElemento('span', { clase: 'rej-metrica-titulo', texto: titulo }),
-      crearElemento('strong', { texto: valor })
-    ]));
+  const contenedor = document.getElementById('rej-metricas');
+  contenedor.textContent = '';
+  if (normalizarResultado(resultado).length === 0) return;
+  const metricas = metricasResultado(resultado);
+  const datos = [
+    ['Días de asistencia', String(metricas.diasAsistencia)],
+    ['Horas muertas', formatearDuracion(metricas.horasMuertasMin)],
+    ['Entrada más temprana', textoHoraMetrica(metricas.entradaMin)],
+    ['Salida más tardía', textoHoraMetrica(metricas.salidaMin)]
+  ];
+  datos.forEach(([titulo, valor]) => {
+    const etiqueta = document.createElement('span');
+    etiqueta.className = 'rej-metrica-titulo';
+    etiqueta.textContent = titulo;
+    const dato = document.createElement('strong');
+    dato.textContent = valor;
+    const metrica = document.createElement('div');
+    metrica.className = 'rej-metrica';
+    metrica.appendChild(etiqueta);
+    metrica.appendChild(dato);
+    contenedor.appendChild(metrica);
   });
 }
 
+/* ---------- Panel de detalle ---------- */
+
+// Cierra el panel de detalle y, si se pide, devuelve el foco a la sesión activa.
 function cerrarDetalleRejilla(devolverFoco) {
-  const det = document.getElementById('rej-detalle');
-  if (det) {
-    det.classList.remove('abierto');
-    det.setAttribute('aria-hidden', 'true');
-    det.textContent = '';
-  }
-  const el = elementoActivoRejilla;
-  if (el) {
-    el.classList.remove('activa');
-    el.setAttribute('aria-pressed', 'false');
-    if (devolverFoco && el.isConnected) el.focus();
-  }
-  sesionActivaRejilla = null;
+  const detalle = document.getElementById('rej-detalle');
+  detalle.classList.remove('abierto');
+  detalle.setAttribute('aria-hidden', 'true');
+  detalle.textContent = '';
+  const elemento = elementoActivoRejilla;
   elementoActivoRejilla = null;
+  if (!elemento) return;
+  elemento.classList.remove('activa');
+  elemento.setAttribute('aria-pressed', 'false');
+  if (devolverFoco && elemento.isConnected) elemento.focus();
 }
 
-function abrirDetalleRejilla(sesion, elemento) {
-  const det = document.getElementById('rej-detalle');
-  if (!det) return;
-  // Pulsar de nuevo la misma sesión alterna el detalle.
-  if (elementoActivoRejilla === elemento) { cerrarDetalleRejilla(true); return; }
-  cerrarDetalleRejilla(false);
-  sesionActivaRejilla = sesion;
-  elementoActivoRejilla = elemento;
-  elemento.classList.add('activa');
-  elemento.setAttribute('aria-pressed', 'true');
+// Crea la lista de datos (código, sección, profesor, día, horario y aula) de una sesión.
+function crearDatosDetalle(sesion) {
   const filas = [
     ['Código', sesion.codigo],
     ['Sección', sesion.seccionId],
@@ -319,63 +354,100 @@ function abrirDetalleRejilla(sesion, elemento) {
     ['Horario', textoHorasSesion(sesion)],
     ['Aula', sesion.aula]
   ];
-  const lista = crearElemento('dl', { clase: 'rej-detalle-datos' });
-  filas.forEach(([t, v]) => {
-    lista.appendChild(crearElemento('dt', { texto: t }));
-    lista.appendChild(crearElemento('dd', { texto: v }));
+  const lista = document.createElement('dl');
+  lista.className = 'rej-detalle-datos';
+  filas.forEach(([titulo, valor]) => {
+    const dt = document.createElement('dt');
+    dt.textContent = titulo;
+    const dd = document.createElement('dd');
+    dd.textContent = valor;
+    lista.appendChild(dt);
+    lista.appendChild(dd);
   });
-  const cerrar = crearElemento('button', { type: 'button', clase: 'btn-sel', texto: 'Cerrar detalle' });
-  cerrar.addEventListener('click', function () { cerrarDetalleRejilla(true); });
-  det.appendChild(crearElemento('h3', { texto: sesion.nombre }));
-  det.appendChild(lista);
-  det.appendChild(cerrar);
-  det.setAttribute('aria-hidden', 'false');
-  det.classList.add('abierto');
+  return lista;
 }
 
+// Abre el detalle de una sesión; pulsar de nuevo la misma sesión lo cierra.
+function abrirDetalleRejilla(sesion, elemento) {
+  if (elementoActivoRejilla === elemento) {
+    cerrarDetalleRejilla(true);
+    return;
+  }
+  cerrarDetalleRejilla(false);
+  elementoActivoRejilla = elemento;
+  elemento.classList.add('activa');
+  elemento.setAttribute('aria-pressed', 'true');
+
+  const titulo = document.createElement('h3');
+  titulo.textContent = sesion.nombre;
+  const cerrar = document.createElement('button');
+  cerrar.type = 'button';
+  cerrar.className = 'btn-sel';
+  cerrar.textContent = 'Cerrar detalle';
+  cerrar.addEventListener('click', function () {
+    cerrarDetalleRejilla(true);
+  });
+
+  const detalle = document.getElementById('rej-detalle');
+  detalle.appendChild(titulo);
+  detalle.appendChild(crearDatosDetalle(sesion));
+  detalle.appendChild(cerrar);
+  detalle.setAttribute('aria-hidden', 'false');
+  detalle.classList.add('abierto');
+}
+
+/* ---------- Render ---------- */
+
+// Crea el aviso que se muestra cuando no hay horarios.
+function crearVacioRejilla() {
+  const vacio = mensajeVacioRejilla || {
+    titulo: 'Todavía no hay horarios generados',
+    texto: 'Usa "Generar horarios" para ver aquí las opciones.'
+  };
+  const titulo = document.createElement('strong');
+  titulo.textContent = vacio.titulo;
+  const texto = document.createElement('p');
+  texto.textContent = vacio.texto;
+  const aviso = document.createElement('div');
+  aviso.className = 'estado-vacio muted';
+  aviso.appendChild(titulo);
+  aviso.appendChild(texto);
+  return aviso;
+}
+
+// Dibuja la posición, los botones, las métricas y la rejilla; avisa con `rejilla:cambio`.
 function renderRejilla() {
-  if (!hayDomRejilla()) return;
   const resultado = obtenerResultadoActual();
-  const hay = !!resultado;
-  const pos = document.getElementById('rej-pos');
-  if (pos) pos.textContent = textoPosicionRejilla();
-  const ant = document.getElementById('rej-anterior');
-  const sig = document.getElementById('rej-siguiente');
-  const def = document.getElementById('btn-definitivo');
-  if (ant) ant.disabled = !hay || indiceRejilla <= 0;
-  if (sig) sig.disabled = !hay || indiceRejilla >= resultadosRejilla.length - 1;
-  if (def) def.disabled = !hay;
+  const hayResultado = resultado !== null;
+  document.getElementById('rej-pos').textContent = textoPosicionRejilla();
+  document.getElementById('rej-anterior').disabled = !hayResultado || indiceRejilla <= 0;
+  document.getElementById('rej-siguiente').disabled = !hayResultado || indiceRejilla >= resultadosRejilla.length - 1;
+  document.getElementById('btn-definitivo').disabled = !hayResultado;
 
   cerrarDetalleRejilla(false);
   renderMetricasRejilla(resultado);
 
-  const cont = document.getElementById('rej-grid');
-  cont.textContent = '';
-  if (hay) {
-    const scroll = crearElemento('div', { clase: 'rej-scroll' });
-    scroll.appendChild(construirRejilla(resultado, { interactiva: true, alSeleccionar: abrirDetalleRejilla }));
-    cont.appendChild(scroll);
+  const contenedor = document.getElementById('rej-grid');
+  contenedor.textContent = '';
+  if (hayResultado) {
+    const desplazable = document.createElement('div');
+    desplazable.className = 'rej-scroll';
+    desplazable.appendChild(construirRejilla(resultado, { interactiva: true, alSeleccionar: abrirDetalleRejilla }));
+    contenedor.appendChild(desplazable);
   } else {
-    const vacio = mensajeVacioRejilla || {
-      titulo: 'Todavía no hay horarios generados',
-      texto: 'Usa "Generar horarios" para ver aquí las opciones.'
-    };
-    cont.appendChild(crearElemento('div', { clase: 'estado-vacio muted' }, [
-      crearElemento('strong', { texto: vacio.titulo }),
-      crearElemento('p', { texto: vacio.texto })
-    ]));
+    contenedor.appendChild(crearVacioRejilla());
   }
   document.dispatchEvent(new CustomEvent('rejilla:cambio'));
 }
 
+/* ---------- Eventos ---------- */
+
+// Conecta los botones de navegación y la tecla Escape.
 function inicializarRejilla() {
-  if (typeof document === 'undefined') return;
-  const ant = document.getElementById('rej-anterior');
-  const sig = document.getElementById('rej-siguiente');
-  if (ant) ant.addEventListener('click', irResultadoAnterior);
-  if (sig) sig.addEventListener('click', irResultadoSiguiente);
-  document.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Escape' && sesionActivaRejilla) cerrarDetalleRejilla(true);
+  document.getElementById('rej-anterior').addEventListener('click', irResultadoAnterior);
+  document.getElementById('rej-siguiente').addEventListener('click', irResultadoSiguiente);
+  document.addEventListener('keydown', function (evento) {
+    if (evento.key === 'Escape' && elementoActivoRejilla) cerrarDetalleRejilla(true);
   });
   renderRejilla();
 }
