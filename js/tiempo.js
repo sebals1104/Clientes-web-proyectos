@@ -1,27 +1,22 @@
+/* ---------- Conversión de horas ---------- */
+
+// Convierte "HH:MM" a minutos desde medianoche.
 function hhmmToMin(hhmm) {
-  const [h,m] = hhmm.split(":").map(Number);
-  return h*60 + m;
+  const [horas, minutos] = hhmm.split(':').map(Number);
+  return horas * 60 + minutos;
 }
 
+// Convierte minutos desde medianoche a "HH:MM".
 function minutosAHhmm(min) {
-  let m = ((min % 1440) + 1440) % 1440;
-  const h = Math.floor(m/60);
-  const mm = m % 60;
-  return String(h).padStart(2,'0') + ':' + String(mm).padStart(2,'0');
+  const minutosDelDia = ((min % 1440) + 1440) % 1440;
+  const horas = Math.floor(minutosDelDia / 60);
+  const minutos = minutosDelDia % 60;
+  return `${String(horas).padStart(2, '0')}:${String(minutos).padStart(2, '0')}`;
 }
 
-function intervaloMin(inicio, fin) {
-  return { ini: hhmmToMin(inicio), fin: hhmmToMin(fin) };
-}
+/* ---------- Choque de intervalos ---------- */
 
+// Dos intervalos chocan solo si se solapan; que uno termine cuando empieza el otro no es choque.
 function chocanIntervalos(inicioA, finA, inicioB, finB) {
-  const a = intervaloMin(inicioA,finA);
-  const b = intervaloMin(inicioB,finB);
-  if (a.fin <= b.ini) return false;
-  if (b.fin <= a.ini) return false;
-  return true;
-}
-
-function duracionMin(inicio, fin) {
-  return hhmmToMin(fin) - hhmmToMin(inicio);
+  return hhmmToMin(inicioA) < hhmmToMin(finB) && hhmmToMin(inicioB) < hhmmToMin(finA);
 }

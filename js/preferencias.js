@@ -1,51 +1,47 @@
-// Preferencias y ordenamiento (§4.6, §4.7). La lógica pura no toca el DOM;
-// el render queda protegido para que el archivo cargue también fuera del navegador.
-// Depende de rejilla.js (sesionesDeResultado, metricasResultado, DIAS_REJILLA) y
-// tiempo.js, pero solo los invoca en tiempo de ejecución: este archivo carga antes.
-
-/* ---------- Lógica pura ---------- */
+/* ---------- Filtros y orden ---------- */
 
 const CRITERIOS_ORDEN = ['menos-dias', 'menos-muertas', 'salida-temprana'];
-const FILTROS_VACIOS = { diasLibres: [], horaMin: '', horaMax: '' };
 
-// Resumen por resultado, cacheado: filtrar y ordenar lo consultan varias veces
-// y la lista del generador puede ser grande.
+// Resumen por resultado; se guarda porque filtrar y ordenar lo consultan varias veces.
 const cacheResumenPreferencias = new WeakMap();
 
 // Promedio de la hora de salida (minutos) contando solo los días con clases.
-function salidaPromedioMin(resultado) {
+function salidaPromedioMin(sesiones) {
   const salidaPorDia = new Map();
-  sesionesDeResultado(resultado).forEach(s => {
-    if (!salidaPorDia.has(s.dia) || s.fin > salidaPorDia.get(s.dia)) salidaPorDia.set(s.dia, s.fin);
+  sesiones.forEach(sesion => {
+    if (!salidaPorDia.has(sesion.dia) || sesion.fin > salidaPorDia.get(sesion.dia)) {
+      salidaPorDia.set(sesion.dia, sesion.fin);
+    }
   });
-  if (!salidaPorDia.size) return null;
-  let suma = 0;
-  salidaPorDia.forEach(fin => { suma += fin; });
+  if (salidaPorDia.size === 0) return null;
+  const suma = Array.from(salidaPorDia.values()).reduce((total, fin) => total + fin, 0);
   return suma / salidaPorDia.size;
 }
 
+// Calcula los días con clase y las métricas de un resultado.
 function resumenPreferencias(resultado) {
-  const clave = Array.isArray(resultado) ? resultado : null;
-  if (clave && cacheResumenPreferencias.has(clave)) return cacheResumenPreferencias.get(clave);
-  const m = metricasResultado(resultado);
+  if (cacheResumenPreferencias.has(resultado)) return cacheResumenPreferencias.get(resultado);
+  const sesiones = sesionesDeResultado(resultado);
+  const metricas = metricasResultado(resultado);
   const resumen = {
-    dias: new Set(sesionesDeResultado(resultado).map(s => s.dia)),
-    entradaMin: m.entradaMin,
-    salidaMin: m.salidaMin,
-    diasAsistencia: m.diasAsistencia,
-    horasMuertasMin: m.horasMuertasMin,
-    salidaPromedioMin: salidaPromedioMin(resultado)
+    dias: new Set(sesiones.map(sesion => sesion.dia)),
+    entradaMin: metricas.entradaMin,
+    salidaMin: metricas.salidaMin,
+    diasAsistencia: metricas.diasAsistencia,
+    horasMuertasMin: metricas.horasMuertasMin,
+    salidaPromedioMin: salidaPromedioMin(sesiones)
   };
-  if (clave) cacheResumenPreferencias.set(clave, resumen);
+  cacheResumenPreferencias.set(resultado, resumen);
   return resumen;
 }
 
+// Completa los filtros que falten con valores vacíos.
 function normalizarFiltros(filtros) {
   const f = filtros || {};
   return {
-    diasLibres: Array.isArray(f.diasLibres) ? f.diasLibres : [],
-    horaMin: f.horaMin ? String(f.horaMin) : '',
-    horaMax: f.horaMax ? String(f.horaMax) : ''
+    diasLibres: f.diasLibres || [],
+    horaMin: f.horaMin || '',
+    horaMax: f.horaMax || ''
   };
 }
 
@@ -61,60 +57,73 @@ function validarFiltrosPreferencias(filtros) {
 // Un filtro vacío no restringe. Los límites de hora son inclusivos.
 function resultadoCumpleFiltros(resultado, filtros) {
   const f = normalizarFiltros(filtros);
-  const r = resumenPreferencias(resultado);
-  if (f.diasLibres.some(d => r.dias.has(d))) return false;
-  if (f.horaMin && r.entradaMin !== null && r.entradaMin < hhmmToMin(f.horaMin)) return false;
-  if (f.horaMax && r.salidaMin !== null && r.salidaMin > hhmmToMin(f.horaMax)) return false;
+  const resumen = resumenPreferencias(resultado);
+  if (f.diasLibres.some(dia => resumen.dias.has(dia))) return false;
+  if (f.horaMin && resumen.entradaMin !== null && resumen.entradaMin < hhmmToMin(f.horaMin)) return false;
+  if (f.horaMax && resumen.salidaMin !== null && resumen.salidaMin > hhmmToMin(f.horaMax)) return false;
   return true;
 }
 
+// Valor numérico por el que se ordena un resultado según el criterio.
 function claveOrden(resultado, criterio) {
-  const r = resumenPreferencias(resultado);
-  if (criterio === 'menos-dias') return r.diasAsistencia;
-  if (criterio === 'menos-muertas') return r.horasMuertasMin;
-  return r.salidaPromedioMin === null ? Infinity : r.salidaPromedioMin;
+  const resumen = resumenPreferencias(resultado);
+  if (criterio === 'menos-dias') return resumen.diasAsistencia;
+  if (criterio === 'menos-muertas') return resumen.horasMuertasMin;
+  if (resumen.salidaPromedioMin === null) return Infinity;
+  return resumen.salidaPromedioMin;
 }
 
-// Estable: los empates conservan el orden del generador. No muta la entrada.
+// Ordena de menor a mayor sin mutar la entrada; los empates conservan el orden del generador.
 function ordenarResultados(resultados, criterio) {
-  const lista = Array.isArray(resultados) ? resultados.slice() : [];
-  if (CRITERIOS_ORDEN.indexOf(criterio) < 0) return lista;
+  const lista = resultados.slice();
+  if (!CRITERIOS_ORDEN.includes(criterio)) return lista;
   return lista
-    .map((r, i) => ({ r, i, k: claveOrden(r, criterio) }))
-    .sort((a, b) => (a.k - b.k) || (a.i - b.i))
-    .map(e => e.r);
+    .map((resultado, indice) => ({ resultado, indice, clave: claveOrden(resultado, criterio) }))
+    .sort((a, b) => (a.clave - b.clave) || (a.indice - b.indice))
+    .map(elemento => elemento.resultado);
 }
 
+// Filtra y ordena los resultados; informa el error si el rango de horas no es válido.
 function aplicarPreferencias(resultados, filtros, criterio) {
-  const origen = Array.isArray(resultados) ? resultados : [];
   const validacion = validarFiltrosPreferencias(filtros);
   if (!validacion.ok) {
-    return { visibles: [], total: origen.length, mostrados: 0, error: validacion.mensaje };
+    return { visibles: [], total: resultados.length, mostrados: 0, error: validacion.mensaje };
   }
-  const visibles = ordenarResultados(origen.filter(r => resultadoCumpleFiltros(r, filtros)), criterio);
-  return { visibles, total: origen.length, mostrados: visibles.length, error: null };
+  const filtrados = resultados.filter(resultado => resultadoCumpleFiltros(resultado, filtros));
+  const visibles = ordenarResultados(filtrados, criterio);
+  return { visibles, total: resultados.length, mostrados: visibles.length, error: null };
 }
 
+// Texto del contador "N de M resultados".
 function textoContadorPreferencias(mostrados, total) {
   if (!total) return 'Sin resultados generados';
-  return mostrados + ' de ' + total + (total === 1 ? ' resultado' : ' resultados');
+  const palabra = total === 1 ? 'resultado' : 'resultados';
+  return `${mostrados} de ${total} ${palabra}`;
 }
 
-/* ---------- Estado y render ---------- */
+// Indica si hay algún filtro puesto.
+function hayFiltrosActivos(filtros) {
+  const f = normalizarFiltros(filtros);
+  return f.diasLibres.length > 0 || !!f.horaMin || !!f.horaMax;
+}
+
+/* ---------- Estado ---------- */
 
 let resultadosOrigenPreferencias = [];
 let resultadosVisiblesPreferencias = [];
 
 const suscriptoresPreferencias = [];
 
+// Registra una función que se llama cada vez que cambian los resultados visibles.
 function suscribirCambioPreferencias(callback) {
-  if (typeof callback === 'function') suscriptoresPreferencias.push(callback);
+  suscriptoresPreferencias.push(callback);
 }
 
+// Avisa a los suscriptores; un fallo en uno no detiene a los demás.
 function notificarCambioPreferencias(detalle) {
-  suscriptoresPreferencias.forEach(cb => {
+  suscriptoresPreferencias.forEach(callback => {
     try {
-      cb(detalle || {});
+      callback(detalle);
     } catch (error) {
       console.error('Fallo en un manejador de preferencias:', error);
     }
@@ -131,32 +140,31 @@ function obtenerResultadosVisiblesPreferencias() {
   return resultadosVisiblesPreferencias.slice();
 }
 
-function hayDomPreferencias() {
-  return typeof document !== 'undefined' && !!document.getElementById('pref-contador');
-}
+/* ---------- Lectura de la pantalla ---------- */
 
+// Lee los filtros escritos en los campos.
 function leerFiltrosPreferencias() {
   const dias = document.getElementById('pref-dias');
-  const hmin = document.getElementById('pref-hmin');
-  const hmax = document.getElementById('pref-hmax');
   return {
-    diasLibres: dias ? Array.from(dias.selectedOptions).map(o => o.value) : [],
-    horaMin: hmin ? hmin.value : '',
-    horaMax: hmax ? hmax.value : ''
+    diasLibres: Array.from(dias.selectedOptions).map(opcion => opcion.value),
+    horaMin: document.getElementById('pref-hmin').value,
+    horaMax: document.getElementById('pref-hmax').value
   };
 }
 
+// Lee el criterio de orden elegido.
 function leerOrdenPreferencias() {
-  const orden = document.getElementById('pref-orden');
-  return orden ? orden.value : '';
+  return document.getElementById('pref-orden').value;
 }
 
+/* ---------- Presentación ---------- */
+
+// Muestra u oculta el error del rango de horas y marca los campos.
 function mostrarMensajePreferencias(texto) {
-  const msg = document.getElementById('pref-mensaje');
-  if (msg) msg.textContent = texto || '';
+  const mensaje = document.getElementById('pref-mensaje');
+  if (mensaje) mensaje.textContent = texto || '';
   ['pref-hmin', 'pref-hmax'].forEach(id => {
     const campo = document.getElementById(id);
-    if (!campo) return;
     if (texto) campo.setAttribute('aria-invalid', 'true');
     else campo.removeAttribute('aria-invalid');
   });
@@ -164,74 +172,84 @@ function mostrarMensajePreferencias(texto) {
 
 // Mensaje de la rejilla cuando hay resultados generados pero ninguno visible.
 function mensajeVacioPreferencias(error) {
-  return error
-    ? { titulo: 'Rango de horas no válido', texto: error }
-    : { titulo: 'Ningún horario cumple las preferencias', texto: 'Quita o ajusta algún filtro para ver las opciones generadas.' };
+  if (error) return { titulo: 'Rango de horas no válido', texto: error };
+  return {
+    titulo: 'Ningún horario cumple las preferencias',
+    texto: 'Quita o ajusta algún filtro para ver las opciones generadas.'
+  };
 }
 
 // Recalcula la lista visible y la entrega a la rejilla (la navegación vuelve a la opción 1).
 function recalcularPreferencias() {
-  const filtros = hayDomPreferencias() ? leerFiltrosPreferencias() : FILTROS_VACIOS;
-  const orden = hayDomPreferencias() ? leerOrdenPreferencias() : '';
-  const r = aplicarPreferencias(resultadosOrigenPreferencias, filtros, orden);
-  resultadosVisiblesPreferencias = r.visibles;
-  if (hayDomPreferencias()) {
-    mostrarMensajePreferencias(r.error);
-    const contador = document.getElementById('pref-contador');
-    contador.textContent = r.error ? '' : textoContadorPreferencias(r.mostrados, r.total);
-    const limpiar = document.getElementById('pref-limpiar');
-    if (limpiar) limpiar.disabled = !hayFiltrosActivos(filtros);
+  const filtros = leerFiltrosPreferencias();
+  const orden = leerOrdenPreferencias();
+  const resultado = aplicarPreferencias(resultadosOrigenPreferencias, filtros, orden);
+  resultadosVisiblesPreferencias = resultado.visibles;
+
+  mostrarMensajePreferencias(resultado.error);
+  const contador = document.getElementById('pref-contador');
+  contador.textContent = resultado.error ? '' : textoContadorPreferencias(resultado.mostrados, resultado.total);
+  const limpiar = document.getElementById('pref-limpiar');
+  if (limpiar) limpiar.disabled = !hayFiltrosActivos(filtros);
+
+  let opcionesRejilla;
+  if (resultadosOrigenPreferencias.length > 0) {
+    opcionesRejilla = { mensajeVacio: mensajeVacioPreferencias(resultado.error) };
   }
-  if (typeof establecerResultadosRejilla === 'function') {
-    const hayOrigen = resultadosOrigenPreferencias.length > 0;
-    establecerResultadosRejilla(r.visibles, hayOrigen ? { mensajeVacio: mensajeVacioPreferencias(r.error) } : undefined);
-  }
+  establecerResultadosRejilla(resultado.visibles, opcionesRejilla);
+
   notificarCambioPreferencias({
-    mostrados: r.mostrados,
-    total: r.total,
-    error: r.error,
-    filtros: filtros,
-    orden: orden
+    mostrados: resultado.mostrados,
+    total: resultado.total,
+    error: resultado.error,
+    filtros,
+    orden
   });
-  return r;
+  return resultado;
 }
 
-function hayFiltrosActivos(filtros) {
-  const f = normalizarFiltros(filtros);
-  return f.diasLibres.length > 0 || !!f.horaMin || !!f.horaMax;
-}
-
-// Punto de entrada para generador.js: recibe la lista completa de combinaciones
-// (vacía al invalidar) y aplica los filtros y el orden vigentes.
+// Recibe la lista completa del generador (vacía al invalidar) y aplica filtros y orden.
 function establecerResultadosPreferencias(resultados) {
-  resultadosOrigenPreferencias = Array.isArray(resultados) ? resultados.slice() : [];
+  resultadosOrigenPreferencias = resultados.slice();
   return recalcularPreferencias();
 }
 
+// Limpia los filtros y recalcula.
 function quitarFiltrosPreferencias() {
   const dias = document.getElementById('pref-dias');
-  if (dias) Array.from(dias.options).forEach(o => { o.selected = false; });
-  ['pref-hmin', 'pref-hmax'].forEach(id => {
-    const campo = document.getElementById(id);
-    if (campo) campo.value = '';
-  });
+  Array.from(dias.options).forEach(opcion => { opcion.selected = false; });
+  document.getElementById('pref-hmin').value = '';
+  document.getElementById('pref-hmax').value = '';
   recalcularPreferencias();
 }
 
+/* ---------- Arranque ---------- */
+
+// Conecta los campos, crea el botón Quitar filtros y el aviso de error.
 function inicializarPreferencias() {
-  if (!hayDomPreferencias()) return;
   ['pref-dias', 'pref-hmin', 'pref-hmax', 'pref-orden'].forEach(id => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.addEventListener('change', recalcularPreferencias);
-    if (el.type === 'time') el.addEventListener('input', recalcularPreferencias);
+    const campo = document.getElementById(id);
+    campo.addEventListener('change', recalcularPreferencias);
+    if (campo.type === 'time') campo.addEventListener('input', recalcularPreferencias);
   });
+
   const contador = document.getElementById('pref-contador');
   contador.setAttribute('role', 'status');
   contador.setAttribute('aria-live', 'polite');
-  const limpiar = crearElemento('button', { id: 'pref-limpiar', type: 'button', clase: 'secondary', texto: 'Quitar filtros' });
+
+  const limpiar = document.createElement('button');
+  limpiar.id = 'pref-limpiar';
+  limpiar.type = 'button';
+  limpiar.className = 'secondary';
+  limpiar.textContent = 'Quitar filtros';
   limpiar.addEventListener('click', quitarFiltrosPreferencias);
   contador.insertAdjacentElement('beforebegin', limpiar);
-  contador.insertAdjacentElement('afterend', crearElemento('div', { id: 'pref-mensaje', clase: 'error', role: 'alert' }));
+
+  const mensaje = document.createElement('div');
+  mensaje.id = 'pref-mensaje';
+  mensaje.className = 'error';
+  mensaje.setAttribute('role', 'alert');
+  contador.insertAdjacentElement('afterend', mensaje);
+
   recalcularPreferencias();
 }

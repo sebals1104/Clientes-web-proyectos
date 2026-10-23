@@ -1,4 +1,6 @@
 const catalogoAbiertos = new Set();
+const LIMITE_CATALOGO = 9;
+let catalogoExpandido = false;
 
 function horarioLegibleSesion(sesion) {
   if (!sesion || !Array.isArray(sesion.bloques) || sesion.bloques.length === 0) return '';
@@ -103,6 +105,8 @@ function renderCatalogo() {
   const activo = document.activeElement;
   const foco = activo && lista.contains(activo) ? activo.getAttribute('data-codigo') : null;
   const accionFoco = foco && activo.getAttribute('data-accion');
+  const botonMas = document.getElementById('btn-catalogo-mas');
+  if (botonMas) botonMas.hidden = catalogoExpandido || resultado.length <= LIMITE_CATALOGO;
   lista.textContent = '';
   if (resultado.length === 0) {
     lista.appendChild(crearElemento('div', { clase: 'estado-vacio' }, [
@@ -111,7 +115,8 @@ function renderCatalogo() {
     ]));
     return;
   }
-  resultado.forEach(m => lista.appendChild(crearTarjetaCatalogo(m)));
+  const visibles = catalogoExpandido ? resultado : resultado.slice(0, LIMITE_CATALOGO);
+  visibles.forEach(m => lista.appendChild(crearTarjetaCatalogo(m)));
   if (foco && accionFoco) {
     const nuevo = lista.querySelector('button[data-codigo="' + foco.replace(/["\\]/g, '\\$&') + '"]');
     if (nuevo) nuevo.focus();
@@ -122,9 +127,24 @@ function inicializarCatalogo() {
   if (typeof document === 'undefined') return;
   const campo = document.getElementById('busqueda');
   const filtro = document.getElementById('filtro-trimestre');
-  if (campo) campo.addEventListener('input', renderCatalogo);
-  if (filtro) filtro.addEventListener('change', renderCatalogo);
+  // Una búsqueda o filtro nuevo vuelve a mostrar solo las primeras materias.
+  const nuevaBusqueda = function () {
+    catalogoExpandido = false;
+    renderCatalogo();
+  };
+  if (campo) campo.addEventListener('input', nuevaBusqueda);
+  if (filtro) filtro.addEventListener('change', nuevaBusqueda);
   const lista = document.getElementById('catalogo-lista');
+  const botonMas = document.getElementById('btn-catalogo-mas');
+  if (botonMas && lista) {
+    botonMas.addEventListener('click', function () {
+      catalogoExpandido = true;
+      renderCatalogo();
+      // El botón se oculta: el foco pasa a la primera materia que acaba de aparecer.
+      const primeraNueva = lista.querySelectorAll('button[data-accion]')[LIMITE_CATALOGO];
+      if (primeraNueva) primeraNueva.focus();
+    });
+  }
   if (lista) {
     lista.addEventListener('click', function (ev) {
       const b = ev.target.closest ? ev.target.closest('button[data-accion]') : null;

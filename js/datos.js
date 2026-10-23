@@ -1,19 +1,49 @@
+/* ---------- Estado ---------- */
+
+const materiasManuales = [];
+
+/* ---------- Catálogo ---------- */
+
+// Devuelve los bloques horarios definidos en data/bloques.js.
 function obtenerBloques() {
-  if (typeof BLOQUES === 'undefined' || !Array.isArray(BLOQUES)) return [];
   return BLOQUES;
 }
 
-function obtenerMateriasCatalogo() {
-  if (typeof MATERIAS === 'undefined' || !Array.isArray(MATERIAS)) return [];
-  return MATERIAS;
+// Devuelve las materias del catálogo más las manuales.
+function obtenerCatalogoCompleto() {
+  return MATERIAS.concat(materiasManuales);
 }
 
-let materiasManuales = [];
-
+// Devuelve una copia de la lista de materias manuales.
 function obtenerMateriasManuales() {
   return materiasManuales.slice();
 }
 
+// Indica si el código ya existe en el catálogo o entre las manuales.
+function existeCodigoMateria(codigo) {
+  if (!codigo) return false;
+  return obtenerCatalogoCompleto().some(materia => materia.codigo === codigo);
+}
+
+// Busca la materia por código; devuelve null si no existe.
+function obtenerMateriaPorCodigo(codigo) {
+  return obtenerCatalogoCompleto().find(materia => materia.codigo === codigo) || null;
+}
+
+// Filtra por texto (código o nombre) y por trimestre.
+function buscarMaterias({ texto = '', trimestre = null } = {}) {
+  const buscado = (texto || '').toLowerCase().trim();
+  const sinTrimestre = trimestre === null || trimestre === undefined;
+  return obtenerCatalogoCompleto().filter(materia => {
+    if (!sinTrimestre && materia.trimestre !== Number(trimestre)) return false;
+    if (!buscado) return true;
+    return materia.codigo.toLowerCase().includes(buscado) || materia.nombre.toLowerCase().includes(buscado);
+  });
+}
+
+/* ---------- Materias manuales ---------- */
+
+// Agrega una materia manual; falla si no tiene código o si ya existe.
 function agregarMateriaManual(materia) {
   if (!materia || !materia.codigo) return false;
   if (existeCodigoMateria(materia.codigo)) return false;
@@ -21,43 +51,19 @@ function agregarMateriaManual(materia) {
   return true;
 }
 
+// Reemplaza una materia manual; falla si no existe o si el nuevo código ya está en uso.
 function editarMateriaManual(codigo, nuevaMateria) {
-  const idx = materiasManuales.findIndex(m => m.codigo === codigo);
-  if (idx === -1) return false;
+  const indice = materiasManuales.findIndex(materia => materia.codigo === codigo);
+  if (indice === -1) return false;
   if (nuevaMateria.codigo !== codigo && existeCodigoMateria(nuevaMateria.codigo)) return false;
-  materiasManuales[idx] = nuevaMateria;
+  materiasManuales[indice] = nuevaMateria;
   return true;
 }
 
+// Elimina una materia manual; falla si no existe.
 function eliminarMateriaManual(codigo) {
-  const idx = materiasManuales.findIndex(m => m.codigo === codigo);
-  if (idx === -1) return false;
-  materiasManuales.splice(idx,1);
+  const indice = materiasManuales.findIndex(materia => materia.codigo === codigo);
+  if (indice === -1) return false;
+  materiasManuales.splice(indice, 1);
   return true;
-}
-
-function existeCodigoMateria(codigo) {
-  if (!codigo) return false;
-  const catalogo = obtenerMateriasCatalogo();
-  if (catalogo.some(m => m.codigo === codigo)) return true;
-  if (materiasManuales.some(m => m.codigo === codigo)) return true;
-  return false;
-}
-
-function obtenerCatalogoCompleto() {
-  return obtenerMateriasCatalogo().concat(obtenerMateriasManuales());
-}
-
-function buscarMaterias({texto='', trimestre=null} = {}) {
-  const textoLower = (texto||'').toLowerCase().trim();
-  return obtenerCatalogoCompleto().filter(m => {
-    const matchTrim = trimestre === null || trimestre === undefined || m.trimestre === Number(trimestre);
-    if (!matchTrim) return false;
-    if (!textoLower) return true;
-    return (m.codigo||'').toLowerCase().includes(textoLower) || (m.nombre||'').toLowerCase().includes(textoLower);
-  });
-}
-
-function obtenerMateriaPorCodigo(codigo) {
-  return obtenerCatalogoCompleto().find(m => m.codigo === codigo) || null;
 }

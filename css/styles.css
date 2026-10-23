@@ -163,6 +163,10 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   align-items: start;
 }
 
+#btn-catalogo-mas {
+  margin-top: 0.75rem;
+}
+
 .cat-card, .sel-card {
   display: grid;
   gap: 0.4rem;
@@ -422,10 +426,22 @@ button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-v
   border-radius: 10px;
 }
 
+/* Aparece con animación al cambiar de resultado */
 .rejilla-grid {
   display: grid;
   min-width: 48rem;
   background: var(--azul-oscuro);
+  animation: aparecer 0.3s ease;
+}
+
+@keyframes aparecer {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
 }
 
 .rej-dia {
@@ -501,13 +517,35 @@ button.rej-sesion:hover {
   box-shadow: 0 0 0 2px var(--azul);
 }
 
+/* Detalle: abre y cierra con transición */
 #rej-detalle {
-  display: none;
   margin-top: 0.75rem;
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  border-width: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 0.25s ease, opacity 0.25s ease, padding 0.25s ease;
 }
 
 #rej-detalle.abierto {
-  display: block;
+  max-height: 30rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  border-width: 1px;
+  opacity: 1;
+}
+
+/* Sin animaciones si el sistema lo pide */
+@media (prefers-reduced-motion: reduce) {
+  .rejilla-grid {
+    animation: none;
+  }
+
+  #rej-detalle {
+    transition: none;
+  }
 }
 
 #rej-detalle h3 {
