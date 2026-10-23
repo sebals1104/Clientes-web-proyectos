@@ -665,6 +665,11 @@ button.rej-sesion:hover {
 
 /* Pantallas pequeñas */
 @media (max-width: 480px) {
+  #catalogo-lista,
+  #sel-lista {
+    grid-template-columns: 1fr;
+  }
+
   #sec-preferencias .flex > label {
     flex: 1 1 100%;
   }
