@@ -1,0 +1,38 @@
+/* Estilos base de controles e interaccion.
+ * TODO(#34): reemplazar por los estilos definitivos de la aplicacion.
+ *
+ * Utilidades minimas de la estructura base (#22).
+ */
+
+/* Contenido solo para lectores de pantalla. */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Enlace de salto: invisible hasta recibir foco con el teclado. */
+.saltar-contenido {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 100;
+}
+
+.saltar-contenido:focus {
+  left: var(--espacio-1);
+  top: var(--espacio-1);
+  padding: var(--espacio-2) var(--espacio-3);
+  background: var(--color-superficie);
+  color: var(--color-tinta);
+  border-radius: var(--radio-sm);
+  outline: var(--borde-foco);
+  outline-offset: 2px;
+  box-shadow: var(--sombra-sm);
+}
