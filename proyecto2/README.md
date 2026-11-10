@@ -1,8 +1,70 @@
-# Dos Fuegos — Decisiones de diseño
+# Dos Fuegos
 
-> Sección correspondiente al issue **#23** (Fase 0). El contrato de arquitectura
-> (#21) y la estructura base (#22) se agregarán a este README cuando se implementen;
-> este documento no los reemplaza.
+Aplicación de una sola página para explorar, consultar y comparar recetas de
+[TheMealDB](https://www.themealdb.com/).
+
+## Integrantes y división del trabajo
+
+- **Sebastián Alsleben:** api, caché, `app.js`, barra de navegación, tarjeta, listado,
+  paginador, formulario, Inicio, Explorar y Categorías y orígenes.
+- **Andrés Acure:** identidad visual, estilos, recetas, comparación, estados de carga,
+  ingredientes, pasos, comparador, Detalle, README y pruebas.
+
+## ¿Cómo ejecutar?
+
+Abrir `index.html` en el navegador. No necesita servidor ni instalación.
+
+## Archivos
+
+Todo el JavaScript está en `js/`, un archivo por pseudocomponente. `index.html` los carga
+en este orden: servicios (`api`, `cache`, `recetas`, `comparacion`), componentes, vistas
+y por último `app.js`.
+
+## Contrato de arquitectura
+
+Cada pseudocomponente es una clase con `constructor(contenedor, props)` y los métodos
+`crear()`, `render()`, `configurarEventos()` y `destruir()`. Se comunican con
+`CustomEvent` que burbujean, y `app.js` escucha los eventos de la aplicación en
+`document`. Las vistas tienen además `obtenerEstado()`, para que **Volver** las deje
+como estaban.
+
+| Pseudocomponente | Responsable | Qué hace | Eventos que emite |
+|---|---|---|---|
+| `BarraNavegacion` | Sebastián | Enlaces a las vistas, vista activa y contador del comparador | `navegar { vista }` |
+| `TarjetaReceta` | Sebastián | Imagen, nombre, categoría, origen y cantidad de ingredientes | `abrir-detalle { id }`, `agregar-comparador { receta }`, `reintentar-tarjeta { id }` |
+| `ListadoRecetas` | Sebastián | Tarjetas de la página actual y el detalle de cada una | — |
+| `Paginador` | Sebastián | Página actual y total, 12 recetas por página | `cambiar-pagina { pagina }` |
+| `FormularioBusqueda` | Sebastián | Nombre, categoría, origen e ingrediente | `buscar { criterios }`, `limpiar` |
+| `EstadoCarga` | Andrés | Carga, vacío y error de una sección | `reintentar` |
+| `ListaIngredientes` | Andrés | Ingredientes con imagen y medida | — |
+| `PasosPreparacion` | Andrés | Pasos numerados | — |
+| `PanelComparador` | Andrés | Panel A o B con su buscador | `receta-elegida { panel, receta }`, `vaciar-panel { panel }` |
+| `TablaComparacion` | Andrés | Métricas de las dos recetas | — |
+| `VistaInicio` | Sebastián | Receta destacada y categorías | `abrir-detalle`, `navegar` |
+| `VistaExplorar` | Sebastián | Búsqueda combinada y resultados | — |
+| `VistaCategoriasOrigenes` | Sebastián | Pestañas, listados y fichas | — |
+| `VistaDetalle` | Andrés | Detalle y recetas relacionadas | `volver`, `agregar-comparador` |
+| `VistaComparador` | Andrés | Los dos paneles y la comparación | `comparador-cambio { paneles }` |
+
+### Servicios
+
+- **`Api`** (`api.js`): todas las peticiones pasan por `Api.pedir`. Cada función devuelve
+  un arreglo, vacío si no hay resultados. Si algo falla lanza un `ErrorApi` con `tipo`
+  `'red'`, `'servicio'` (con el `estado` HTTP), `'datos'` o `'cancelado'` (este no se
+  muestra).
+- **`CacheApi`** (`cache.js`): cada receta y cada lista (categorías, orígenes e
+  ingredientes) se pide una sola vez.
+- **`Recetas`** (`recetas.js`): convierte una receta de la API en
+  `{ id, nombre, imagen, categoria, origen, etiquetas, ingredientes, pasos, palabras, video, completa }`,
+  donde cada ingrediente es `{ nombre, medida, imagen }`.
+- **`Comparacion`** (`comparacion.js`): calcula las métricas del comparador a partir de
+  dos recetas.
+
+---
+
+## Decisiones de diseño
+
+> **Issue #23 · Fase 0.** Identidad visual definida por Andrés.
 
 **Nombre:** **Dos Fuegos**. Juega con los dos fogones de la cocina y con los dos paneles
 del comparador: *dos recetas, una elección*. Es corto, pronunciable, no describe un
@@ -19,7 +81,7 @@ escribir colores literales: los estilos consumen las custom properties.
 
 ---
 
-## Paleta
+### Paleta
 
 | Token | Valor | Uso | Contraste comprobado |
 |---|---|---|---|
@@ -42,7 +104,7 @@ paleta categórica (`--color-cat-1` a `--color-cat-8`) se usa como punto, borde 
 sobre fondo claro; el texto de las etiquetas sigue siendo `--color-tinta`, de modo que
 el contraste no depende del tono elegido.
 
-## Tipografía
+### Tipografía
 
 | Rol | Stack | Uso |
 |---|---|---|
@@ -55,7 +117,7 @@ La escala va de `--texto-xs` (12 px) a `--texto-display` (44–64 px con `clamp`
 aspecto sin conexión y no depende de kits de terceros. El interlineado y los pesos
 también están tokenizados (`--linea-*`, `--peso-*`).
 
-## Iconografía
+### Iconografía
 
 - **Estilo:** línea geométrica con extremos y uniones redondeados, trazo
   `--icono-trazo` (1.75) sobre una cuadrícula de 24 × 24.
@@ -68,7 +130,7 @@ también están tokenizados (`--linea-*`, `--peso-*`).
   `aria-hidden="true"`; los interactivos, nombre accesible.
 - **Estados:** hover y foco visibles; el foco usa `--color-foco` con `outline-offset`.
 
-## Formas, movimiento y referencias
+### Formas, movimiento y referencias
 
 - Radios suaves (`--radio-sm/md/lg`), bordes cálidos de 1 px y sombras discretas.
 - Movimiento breve (120–320 ms) con `--curva-estandar`; se anula con
@@ -78,7 +140,7 @@ también están tokenizados (`--linea-*`, `--peso-*`).
   rotulación de mercados. La paleta parte del papel, el barro cocido, el azafrán y la
   oliva. No se usaron plantillas, temas ni kits de interfaz.
 
-## Cómo consumir los tokens
+### Cómo consumir los tokens
 
 ```css
 .boton-primario {
@@ -101,7 +163,7 @@ también están tokenizados (`--linea-*`, `--peso-*`).
 }
 ```
 
-## Verificación
+### Verificación
 
 - Contrastes calculados con la fórmula WCAG 2.1; todos los pares de texto superan
   **AA (≥ 4.5:1)**.
