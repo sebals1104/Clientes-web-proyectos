@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dos Fuegos</title>
+  <meta name="description" content="Dos Fuegos: explora, consulta y compara recetas de TheMealDB.">
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <a class="saltar-contenido" href="#vista">Saltar al contenido</a>
+
+  <header>
+    <h1>Dos Fuegos</h1>
+    <nav id="barra-navegacion" aria-label="Navegación principal"></nav>
+  </header>
+
+  <main id="vista" tabindex="-1"></main>
+
+  <div id="anuncios" class="solo-lectores" role="status" aria-live="polite"></div>
+
+  <noscript>Dos Fuegos necesita JavaScript para funcionar. Actívalo en tu navegador e inténtalo de nuevo.</noscript>
+
+  <!-- Servicios -->
+  <script src="js/api.js"></script>
+  <script src="js/cache.js"></script>
+  <script src="js/recetas.js"></script>
+  <script src="js/comparacion.js"></script>
+
+  <!-- Componentes -->
+  <script src="js/EstadoCarga.js"></script>
+  <script src="js/TarjetaReceta.js"></script>
+  <script src="js/Paginador.js"></script>
+  <script src="js/ListadoRecetas.js"></script>
+  <script src="js/BarraNavegacion.js"></script>
+  <script src="js/FormularioBusqueda.js"></script>
+  <script src="js/ListaIngredientes.js"></script>
+  <script src="js/PasosPreparacion.js"></script>
+  <script src="js/PanelComparador.js"></script>
+  <script src="js/TablaComparacion.js"></script>
+
+  <!-- Vistas -->
+  <script src="js/VistaInicio.js"></script>
+  <script src="js/VistaExplorar.js"></script>
+  <script src="js/VistaCategoriasOrigenes.js"></script>
+  <script src="js/VistaDetalle.js"></script>
+  <script src="js/VistaComparador.js"></script>
+
+  <!-- Punto de entrada -->
+  <script src="js/app.js"></script>
+</body>
+</html>
