@@ -20,6 +20,9 @@ Todo el JavaScript está en `js/`, un archivo por pseudocomponente. `index.html`
 en este orden: servicios (`api`, `cache`, `recetas`, `comparacion`), componentes, vistas
 y por último `app.js`.
 
+Los recursos propios, como la imagen alternativa de ingredientes
+[`assets/ingrediente-fallback.svg`](assets/ingrediente-fallback.svg), viven en `assets/`.
+
 ## Contrato de arquitectura
 
 Cada pseudocomponente es una clase con `constructor(contenedor, props)` y los métodos
@@ -35,9 +38,9 @@ como estaban.
 | `ListadoRecetas` | Sebastián | Tarjetas de la página actual y el detalle de cada una | — |
 | `Paginador` | Sebastián | Página actual y total, 12 recetas por página | `cambiar-pagina { pagina }` |
 | `FormularioBusqueda` | Sebastián | Nombre, categoría, origen e ingrediente | `buscar { criterios }`, `limpiar` |
-| `EstadoCarga` | Andrés | Carga, vacío y error de una sección | `reintentar` |
-| `ListaIngredientes` | Andrés | Ingredientes con imagen y medida | — |
-| `PasosPreparacion` | Andrés | Pasos numerados | — |
+| `EstadoCarga` | Andrés | Carga con la forma del contenido (`tarjetas`, `detalle`, `panel`, `filas`), vacíos diseñados y errores de `Api` con Reintentar; métodos `cargando`, `vacio`, `fallo`, `aviso`, `ocultar` | `reintentar { contexto }` |
+| `ListaIngredientes` | Andrés | `actualizar(ingredientes)` pinta imagen, nombre y medida; si una imagen no carga usa `assets/ingrediente-fallback.svg` | — |
+| `PasosPreparacion` | Andrés | `actualizar(pasos)` pinta la lista ordenada con número decorativo | — |
 | `PanelComparador` | Andrés | Panel A o B con su buscador | `receta-elegida { panel, receta }`, `vaciar-panel { panel }` |
 | `TablaComparacion` | Andrés | Métricas de las dos recetas | — |
 | `VistaInicio` | Sebastián | Receta destacada y categorías | `abrir-detalle`, `navegar` |

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" role="img" aria-label="Ingrediente">
+  <title>Ingrediente</title>
+  <!-- Papel cálido (#F3EBDD) y borde suave (#D8CCB9) de la paleta de Dos Fuegos -->
+  <rect width="128" height="128" rx="18" fill="#F3EBDD"/>
+  <rect x="1" y="1" width="126" height="126" rx="17" fill="none" stroke="#D8CCB9" stroke-width="2"/>
+  <!-- Mortero en rojo brasa (#A63D2A) -->
+  <path d="M30 62 C32 84 46 98 64 98 C82 98 96 84 98 62" fill="none" stroke="#A63D2A" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M26 62 H102" fill="none" stroke="#A63D2A" stroke-width="6" stroke-linecap="round"/>
+  <path d="M54 98 L50 106 M74 98 L78 106" fill="none" stroke="#A63D2A" stroke-width="6" stroke-linecap="round"/>
+  <!-- Mazo en azafrán (#D99A26) -->
+  <path d="M94 26 C86 40 77 52 67 63" fill="none" stroke="#D99A26" stroke-width="6" stroke-linecap="round"/>
+  <!-- Aromas en borde fuerte (#B9A98F) -->
+  <path d="M44 34 C42 28 48 24 46 18" fill="none" stroke="#B9A98F" stroke-width="4" stroke-linecap="round"/>
+  <path d="M58 28 C56 22 62 18 60 12" fill="none" stroke="#B9A98F" stroke-width="4" stroke-linecap="round"/>
+</svg>
