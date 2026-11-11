@@ -24,8 +24,9 @@ Los recursos propios, como la imagen alternativa de ingredientes
 [`assets/ingrediente-fallback.svg`](assets/ingrediente-fallback.svg), viven en `assets/`.
 
 `css/styles.css` se organiza en secciones numeradas —base, estructura, controles,
-estados de carga, componentes de Andrés, utilidades y responsive— para que cada
-integrante agregue sus estilos de componente en la sección que le corresponde.
+estados de carga, componentes de Andrés, utilidades y responsive— y termina con la
+sección 8, los componentes de Sebastián, para que cada integrante agregue sus estilos de
+componente en la sección que le corresponde.
 
 ## Contrato de arquitectura
 
@@ -34,6 +35,11 @@ Cada pseudocomponente es una clase con `constructor(contenedor, props)` y los m�
 `CustomEvent` que burbujean, y `app.js` escucha los eventos de la aplicación en
 `document`. Las vistas tienen además `obtenerEstado()`, para que **Volver** las deje
 como estaban.
+
+`app.js` le pasa a cada vista `{ signal, paneles, estado }`: el `AbortSignal` que se
+cancela al salir (para `Api`), las recetas del comparador `[a, b]` y lo que devolvió
+`obtenerEstado()`. `VistaDetalle` recibe además `{ id }`. Los nombres de vista son
+`inicio`, `explorar`, `categorias-origenes`, `detalle` y `comparador`.
 
 | Pseudocomponente | Responsable | Qué hace | Eventos que emite |
 |---|---|---|---|
