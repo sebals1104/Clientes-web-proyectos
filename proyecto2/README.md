@@ -51,8 +51,8 @@ cancela al salir (para `Api`), las recetas del comparador `[a, b]` y lo que devo
 | `EstadoCarga` | Andrés | Carga con la forma del contenido (`tarjetas`, `detalle`, `panel`, `filas`), vacíos diseñados y errores de `Api` con Reintentar; métodos `cargando`, `vacio`, `fallo`, `aviso`, `ocultar` | `reintentar { contexto }` |
 | `ListaIngredientes` | Andrés | `actualizar(ingredientes)` pinta imagen, nombre y medida; si una imagen no carga usa `assets/ingrediente-fallback.svg` | — |
 | `PasosPreparacion` | Andrés | `actualizar(pasos)` pinta la lista ordenada con número decorativo | — |
-| `PanelComparador` | Andrés | Panel A o B con su buscador | `receta-elegida { panel, receta }`, `vaciar-panel { panel }` |
-| `TablaComparacion` | Andrés | Métricas de las dos recetas | — |
+| `PanelComparador` | Andrés | Panel A o B con buscador propio (debounce de 400 ms y `AbortController`); props `{ panel, receta, otra }`, métodos `actualizar(receta)`, `actualizarOtra(receta)` y `vaciar()` | `receta-elegida { panel, receta }`, `vaciar-panel { panel }` |
+| `TablaComparacion` | Andrés | Props `{ a, b }` y `actualizar(a, b)`: todas las métricas de `Comparacion.comparar`, resalta el menor, grupos de etiquetas e ingredientes y similitud; se oculta si falta una receta | — |
 | `VistaInicio` | Sebastián | Receta destacada y categorías | `abrir-detalle`, `navegar` |
 | `VistaExplorar` | Sebastián | Búsqueda combinada y resultados | — |
 | `VistaCategoriasOrigenes` | Sebastián | Pestañas, listados y fichas | — |
