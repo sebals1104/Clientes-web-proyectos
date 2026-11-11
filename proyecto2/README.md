@@ -56,9 +56,16 @@ como estaban.
   ingredientes) se pide una sola vez.
 - **`Recetas`** (`recetas.js`): convierte una receta de la API en
   `{ id, nombre, imagen, categoria, origen, etiquetas, ingredientes, pasos, palabras, video, completa }`,
-  donde cada ingrediente es `{ nombre, medida, imagen }`.
+  donde cada ingrediente es `{ nombre, medida, imagen }`. Las recetas resumidas de
+  `filter.php` también se pueden normalizar: llegan con `completa: false`, sin pasos
+  ni ingredientes, y con `categoria` en `null`.
 - **`Comparacion`** (`comparacion.js`): calcula las métricas del comparador a partir de
-  dos recetas.
+  dos recetas normalizadas. `Comparacion.comparar(a, b)` devuelve un objeto con
+  `ingredientes`, `pasos` y `palabras` (`{ a, b, menor }`), `categoria` y `origen`
+  (`{ a, b, coinciden }`), `etiquetasComunes`, `video` (`{ a, b }`), los ingredientes
+  `ingredientesComunes`, `ingredientesExclusivosA` y `ingredientesExclusivosB`, la
+  `similitud` como porcentaje entero y `masSencilla` (`'a'`, `'b'` o `'empate'`).
+  Las listas se comparan sin distinguir mayúsculas ni espacios sobrantes.
 
 ---
 
