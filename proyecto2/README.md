@@ -23,6 +23,10 @@ y por último `app.js`.
 Los recursos propios, como la imagen alternativa de ingredientes
 [`assets/ingrediente-fallback.svg`](assets/ingrediente-fallback.svg), viven en `assets/`.
 
+`css/styles.css` se organiza en secciones numeradas —base, estructura, controles,
+estados de carga, componentes de Andrés, utilidades y responsive— para que cada
+integrante agregue sus estilos de componente en la sección que le corresponde.
+
 ## Contrato de arquitectura
 
 Cada pseudocomponente es una clase con `constructor(contenedor, props)` y los métodos
@@ -172,6 +176,10 @@ también están tokenizados (`--linea-*`, `--peso-*`).
   outline-offset: 2px;
 }
 ```
+
+Las vistas aplican la clase `.aparece` al contenido que acaba de cargar, para la
+transición de resultados de §5.1; `prefers-reduced-motion` la desactiva junto con el
+brillo de los esqueletos.
 
 ### Verificación
 
