@@ -31,6 +31,9 @@
         8.2 TarjetaReceta
         8.3 Paginador
         8.4 FormularioBusqueda
+        8.5 ListadoRecetas
+        8.6 VistaExplorar
+        8.7 VistaInicio
    ===================================================================== */
 
 /* =====================================================================
@@ -1156,4 +1159,96 @@ legend {
 .formulario-busqueda__sugerencia[aria-selected="true"] {
   background: var(--color-primario-suave);
   color: var(--color-primario);
+}
+
+/* 8.5 ListadoRecetas (#40) ------------------------------------------ */
+
+.listado-recetas {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--espacio-4);
+}
+
+/* 8.6 VistaExplorar (#40) ------------------------------------------- */
+
+.vista-explorar {
+  display: grid;
+  gap: var(--espacio-5);
+}
+
+.vista-explorar > h2 {
+  margin: 0;
+}
+
+.vista-explorar__resultados {
+  display: grid;
+  gap: var(--espacio-4);
+}
+
+.vista-explorar__total {
+  margin: 0;
+  color: var(--color-tinta-suave);
+  font-weight: var(--peso-medio);
+}
+
+/* 8.7 VistaInicio (#39) --------------------------------------------- */
+
+.vista-inicio {
+  display: grid;
+  gap: var(--espacio-6);
+}
+
+.vista-inicio h2 {
+  margin-bottom: var(--espacio-4);
+}
+
+.inicio-destacada__tarjeta {
+  flex-direction: row;
+  flex-wrap: wrap;
+}
+
+.inicio-destacada__imagen {
+  flex: 1 1 16rem;
+  max-width: 100%;
+}
+
+.inicio-destacada__tarjeta .tarjeta__cuerpo {
+  flex: 1 1 16rem;
+  align-content: center;
+  padding: var(--espacio-5);
+}
+
+.inicio-destacada__aviso {
+  margin: 0;
+  padding: var(--espacio-2) var(--espacio-3);
+  border-left: var(--espacio-1) solid var(--color-aviso);
+  border-radius: var(--radio-sm);
+  background: var(--color-aviso-suave);
+  font-size: var(--texto-sm);
+}
+
+.inicio-destacada__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2);
+}
+
+.inicio-categorias__cuadricula {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+  gap: var(--espacio-4);
+}
+
+.tarjeta-categoria {
+  height: 100%;
+}
+
+.tarjeta-categoria .tarjeta__cuerpo {
+  flex: 1;
+  align-content: start;
+}
+
+.tarjeta-categoria .boton--secundario {
+  align-self: end;
+  justify-self: start;
 }
