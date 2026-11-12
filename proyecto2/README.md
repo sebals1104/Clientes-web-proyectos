@@ -65,6 +65,7 @@ listado usan `Promise.allSettled`: si una petición falla, el resto se muestra i
 esa parte queda con su error. Los criterios de Explorar usan `Promise.all`: la
 intersección necesita todas las respuestas. Inicio abre una categoría con
 `navegar { vista: 'categorias-origenes', props: { categoria } }`, donde `categoria` es su nombre.
+`VistaCategoriasOrigenes` guarda `{ pestana, lista, seleccion, recetas, pagina }`; si recibe ese estado, gana sobre `categoria`.
 
 ### Servicios
 
