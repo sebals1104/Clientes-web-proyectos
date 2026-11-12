@@ -59,6 +59,13 @@ cancela al salir (para `Api`), las recetas del comparador `[a, b]` y lo que devo
 | `VistaDetalle` | Andrés | Detalle y recetas relacionadas | `volver`, `agregar-comparador` |
 | `VistaComparador` | Andrés | Los dos paneles y la comparación | `comparador-cambio { paneles }` |
 
+`ListadoRecetas` recibe `{ recetas, pagina }` (recetas normalizadas, 12 por página) y
+expone `actualizar(recetas, pagina)` y `mostrarPagina(n)`. Inicio y el detalle del
+listado usan `Promise.allSettled`: si una petición falla, el resto se muestra igual y solo
+esa parte queda con su error. Los criterios de Explorar usan `Promise.all`: la
+intersección necesita todas las respuestas. Inicio abre una categoría con
+`navegar { vista: 'categorias-origenes', props: { categoria } }`, donde `categoria` es su nombre.
+
 ### Servicios
 
 - **`Api`** (`api.js`): todas las peticiones pasan por `Api.pedir`. Cada función devuelve
