@@ -138,7 +138,8 @@ class Aplicacion {
     }
     const libre = this.paneles.findIndex(p => p === null);
     if (libre === -1) {
-      this.anunciar('El comparador ya tiene dos recetas. Vacía un panel desde el Comparador para agregar otra.');
+      this.anunciar('El comparador está lleno. Elige qué panel reemplazar.');
+      this.montar('comparador', { reemplazar: receta });
       return;
     }
     this.paneles[libre] = receta;

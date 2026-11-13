@@ -1499,6 +1499,54 @@ legend {
   font-size: var(--texto-lg);
 }
 
+/* 5.6 VistaComparador (#43) ----------------------------------------- */
+
+.vista-comparador {
+  display: grid;
+  gap: var(--espacio-5);
+  min-width: 0;
+}
+
+.comparador-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--espacio-3);
+}
+
+.comparador-cabecera h2 {
+  margin: 0;
+}
+
+.comparador-paneles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--espacio-4);
+  align-items: start;
+  min-width: 0;
+}
+
+.comparador-reemplazo {
+  display: grid;
+  gap: var(--espacio-3);
+  padding: var(--espacio-4);
+  border-left: var(--espacio-1) solid var(--color-aviso);
+  border-radius: var(--radio-md);
+  background: var(--color-aviso-suave);
+}
+
+.comparador-reemplazo__texto {
+  margin: 0;
+  font-weight: var(--peso-medio);
+}
+
+.comparador-reemplazo__acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--espacio-2);
+}
+
 /* =====================================================================
    6. UTILIDADES
    ===================================================================== */
@@ -1610,6 +1658,10 @@ legend {
 
   .detalle-receta__nombre {
     font-size: var(--texto-xl);
+  }
+
+  .comparador-paneles {
+    grid-template-columns: 1fr;
   }
 }
 
