@@ -7,12 +7,24 @@ Aplicación de una sola página para explorar, consultar y comparar recetas de
 
 - **Sebastián Alsleben:** api, caché, `app.js`, barra de navegación, tarjeta, listado,
   paginador, formulario, Inicio, Explorar y Categorías y orígenes.
+  [Issues de Sebastián](https://github.com/sebals1104/Clientes-web-proyectos/issues?q=assignee%3Asebals1104+label%3Aproyecto-2).
 - **Andrés Acure:** identidad visual, estilos, recetas, comparación, estados de carga,
   ingredientes, pasos, comparador, Detalle, README y pruebas.
+  [Issues de Andrés](https://github.com/sebals1104/Clientes-web-proyectos/issues?q=assignee%3Aandresacureromunoz-prog+label%3Aproyecto-2).
 
 ## ¿Cómo ejecutar?
 
 Abrir `index.html` en el navegador. No necesita servidor ni instalación.
+
+## Capturas de pantalla
+
+| Vista | Captura |
+|---|---|
+| Inicio | ![Inicio](assets/capturas/inicio.png) |
+| Explorar | ![Explorar](assets/capturas/explorar.png) |
+| Categorías y orígenes | ![Categorías y orígenes](assets/capturas/categorias-origenes.png) |
+| Detalle | ![Detalle](assets/capturas/detalle.png) |
+| Comparador | ![Comparador](assets/capturas/comparador.png) |
 
 ## Archivos
 
@@ -66,6 +78,15 @@ esa parte queda con su error. Los criterios de Explorar usan `Promise.all`: la
 intersección necesita todas las respuestas. Inicio abre una categoría con
 `navegar { vista: 'categorias-origenes', props: { categoria } }`, donde `categoria` es su nombre.
 `VistaCategoriasOrigenes` guarda `{ pestana, lista, seleccion, recetas, pagina }`; si recibe ese estado, gana sobre `categoria`.
+
+### `Promise.all` y `Promise.allSettled`
+
+- **`Promise.allSettled`**, donde §4.7 exige tolerar el fallo parcial:
+  - `VistaInicio`: la receta destacada y las categorías se piden a la vez; si una falla, la otra se muestra igual.
+  - `VistaDetalle`: las relacionadas por categoría y por origen se piden a la vez; el fallo de una no impide mostrar la otra.
+  - `ListadoRecetas`: el detalle de las tarjetas de la página visible se resuelve a la vez; un fallo deja esa tarjeta como incompleta, con su propio Reintentar.
+- **`Promise.all`**, donde todas las respuestas son necesarias para continuar:
+  - `VistaExplorar`: la intersección de criterios necesita la lista de cada criterio aplicado; si falta una, no hay resultado que mostrar.
 
 ### Servicios
 
