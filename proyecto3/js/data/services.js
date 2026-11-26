@@ -75,7 +75,7 @@ const Servicios = {
     const tareas = (servicio.tasks || []).reduce((suma, t) => suma + (Number(t.cost) || 0), 0);
     const labor = Number(servicio.laborCost) || 0;
     const partes = (repuestos || []).reduce((suma, p) => suma + (Number(p.totalCost) || 0), 0);
-    return redondearImporte(tareas + labor + partes);
+    return Dinero.redondear(tareas + labor + partes);
   },
 
   // Devuelve una copia del servicio con su costo total recién calculado.
@@ -240,8 +240,3 @@ const Servicios = {
     return (a.createdAt || '') < (b.createdAt || '') ? 1 : -1;
   }
 };
-
-// Redondea un importe a dos decimales (se moverá a domain/money.js, issue #54).
-function redondearImporte(n) {
-  return Math.round((Number(n) + Number.EPSILON) * 100) / 100;
-}
