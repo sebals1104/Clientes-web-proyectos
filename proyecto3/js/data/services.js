@@ -59,12 +59,16 @@ const Servicios = {
     return repuestos;
   },
 
-  // Sube el odómetro del vehículo dentro de la transacción si la lectura es mayor.
-  async subirOdometroEnTx(stores, vehicleId, odometer) {
+  // Actualiza el odómetro del vehículo dentro de la transacción. Una lectura
+  // nueva (al crear) no puede ser menor al actual; una mayor lo sube.
+  async actualizarOdometroEnTx(stores, vehicleId, lectura, esNueva) {
     const vehiculo = await pedir(stores.vehicles.get(Number(vehicleId)));
     if (!vehiculo) throw new Error('El vehículo del servicio no existe.');
-    if (Number(odometer) > vehiculo.currentOdometer) {
-      vehiculo.currentOdometer = Number(odometer);
+    const actual = Odometro.normalizar(vehiculo.currentOdometer);
+    const nueva = Odometro.normalizar(lectura);
+    if (esNueva) Odometro.validarNueva(nueva, actual, 'El odómetro del servicio');
+    if (nueva > actual) {
+      vehiculo.currentOdometer = nueva;
       vehiculo.updatedAt = new Date().toISOString();
       await pedir(stores.vehicles.put(vehiculo));
     }
@@ -96,7 +100,7 @@ const Servicios = {
       const repuestos = await Servicios.leerRepuestos(stores, servicio.partIds);
       servicio.totalCost = Servicios.calcularTotal(servicio, repuestos);
       const nuevoId = await pedir(stores.services.add(servicio));
-      await Servicios.subirOdometroEnTx(stores, servicio.vehicleId, servicio.odometer);
+      await Servicios.actualizarOdometroEnTx(stores, servicio.vehicleId, servicio.odometer, true);
       return nuevoId;
     });
     return Object.assign(servicio, { id });
@@ -116,7 +120,7 @@ const Servicios = {
       const repuestos = await Servicios.leerRepuestos(stores, servicio.partIds);
       servicio.totalCost = Servicios.calcularTotal(servicio, repuestos);
       await pedir(stores.services.put(servicio));
-      await Servicios.subirOdometroEnTx(stores, servicio.vehicleId, servicio.odometer);
+      await Servicios.actualizarOdometroEnTx(stores, servicio.vehicleId, servicio.odometer, false);
     });
     return servicio;
   },
